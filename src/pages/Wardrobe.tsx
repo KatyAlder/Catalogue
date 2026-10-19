@@ -29,6 +29,7 @@ import { useAppState } from '../data/store'
 import type { CollectionMeta, Shelf } from '../data/types'
 import { DECOR_KEYS, artUrl, decorUrl } from '../artIcons'
 import { Icon } from '../icons'
+import { labelCss } from '../labelStyle'
 
 const SHELF_PREFIX = 'shelf:'
 
@@ -42,6 +43,11 @@ function Box({
   justDragged: React.RefObject<boolean>
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id })
+  const nameEl = (
+    <span className="box-name" style={labelCss(c.label)}>
+      {c.name}
+    </span>
+  )
   return (
     <div
       ref={setNodeRef}
@@ -60,6 +66,7 @@ function Box({
           if (justDragged.current) e.preventDefault()
         }}
       >
+        {c.label?.position === 'above' && nameEl}
         {artUrl(c.icon) ? (
           <img className="box-art" src={artUrl(c.icon)} alt="" draggable={false} />
         ) : (
@@ -67,7 +74,7 @@ function Box({
             <Icon name={c.icon} size={40} />
           </span>
         )}
-        <span className="box-name">{c.name}</span>
+        {c.label?.position !== 'above' && nameEl}
         {caption && <span className="box-caption">{caption}</span>}
       </Link>
     </div>

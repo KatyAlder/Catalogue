@@ -4,6 +4,7 @@ import type { CollectionModule, Column, ColumnType, SelectOption } from '../data
 import { uid } from '../data/types'
 import { ICON_KEYS, iconLabel } from '../iconData'
 import { Icon } from '../icons'
+import { LABEL_FONTS, LABEL_DEFAULTS, LABEL_SIZE_MAX, LABEL_SIZE_MIN, compactLabel, labelCss } from '../labelStyle'
 
 const TYPE_LABELS: Record<ColumnType, string> = {
   text: 'Текст',
@@ -66,6 +67,10 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
   const [nameCol, setNameCol] = useState(initial?.finance?.nameColumnId ?? '')
   const [amountCol, setAmountCol] = useState(initial?.finance?.amountColumnId ?? '')
   const [currencyCol, setCurrencyCol] = useState(initial?.finance?.currencyColumnId ?? '')
+  const [labelPos, setLabelPos] = useState<'below' | 'above'>(initial?.label?.position ?? LABEL_DEFAULTS.position)
+  const [labelFont, setLabelFont] = useState(initial?.label?.font ?? LABEL_DEFAULTS.font)
+  const [labelSize, setLabelSize] = useState(initial?.label?.size ?? LABEL_DEFAULTS.size)
+  const [labelColor, setLabelColor] = useState(initial?.label?.color ?? '')
   const [error, setError] = useState('')
 
   const patchCol = (id: string, patch: Partial<Column>) =>
@@ -147,6 +152,7 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
       name: trimmed,
       icon,
       module,
+      label: compactLabel({ position: labelPos, font: labelFont, size: labelSize, color: labelColor || undefined }),
       columns: columns.map((c) => ({ ...c, name: c.name.trim() })),
       tracker: isTracker ? { dateColumnId: dateCol, statusColumnId: statusCol } : undefined,
       finance: isFinance
@@ -194,6 +200,58 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
           ))}
         </div>
       </div>
+
+      <fieldset className="label-cfg">
+        <legend>Підпис на шафі</legend>
+        <div className="label-grid">
+          <label className="field">
+            <span>Розташування</span>
+            <select value={labelPos} onChange={(e) => setLabelPos(e.target.value as 'below' | 'above')}>
+              <option value="below">Під іконкою</option>
+              <option value="above">Над іконкою</option>
+            </select>
+          </label>
+          <label className="field">
+            <span>Шрифт</span>
+            <select value={labelFont} onChange={(e) => setLabelFont(e.target.value)}>
+              {Object.entries(LABEL_FONTS).map(([k, f]) => (
+                <option key={k} value={k}>
+                  {f.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="field">
+            <span>Розмір: {labelSize} px</span>
+            <input
+              type="range"
+              min={LABEL_SIZE_MIN}
+              max={LABEL_SIZE_MAX}
+              value={labelSize}
+              onChange={(e) => setLabelSize(Number(e.target.value))}
+            />
+          </label>
+          <div className="field">
+            <span>Колір</span>
+            <div className="label-color">
+              <input
+                type="color"
+                value={labelColor || '#f1e4d0'}
+                onChange={(e) => setLabelColor(e.target.value)}
+                aria-label="Колір підпису"
+              />
+              <button type="button" className="btn ghost small" onClick={() => setLabelColor('')} disabled={!labelColor}>
+                Стандартний
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="label-preview">
+          <span style={labelCss({ font: labelFont, size: labelSize, color: labelColor || undefined })}>
+            {name.trim() || 'Назва колекції'}
+          </span>
+        </div>
+      </fieldset>
 
       {mode === 'create' && (
         <div className="field">

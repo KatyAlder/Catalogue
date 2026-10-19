@@ -41,6 +41,14 @@ export interface FinanceConfig {
   rates: Record<string, number>
 }
 
+/** Вигляд підпису колекції на шафі; відсутні поля = значення за замовчуванням */
+export interface LabelStyle {
+  position?: 'below' | 'above'
+  font?: string // ключ зі списку LABEL_FONTS
+  size?: number // px
+  color?: string // #rrggbb
+}
+
 export interface CollectionMeta {
   id: string
   name: string
@@ -49,6 +57,7 @@ export interface CollectionMeta {
   columns: Column[]
   tracker?: TrackerConfig
   finance?: FinanceConfig
+  label?: LabelStyle
   createdAt: number
   updatedAt: number
 }
