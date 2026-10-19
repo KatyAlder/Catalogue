@@ -1055,3 +1055,65 @@ table.records {
     height: 72px;
   }
 }
+
+
+/* декор шафи */
+.decor-wrap {
+  position: relative;
+  width: 96px;
+  min-height: 96px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  touch-action: manipulation;
+}
+.decor {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.55));
+  pointer-events: none;
+}
+.decor-x {
+  position: absolute;
+  top: 0;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--amber);
+  background: var(--wood-900);
+  color: #e08a6b;
+  font-size: 12px;
+  cursor: pointer;
+}
+.decor-picker {
+  border-top: 1px solid var(--wood-700);
+  padding-top: 8px;
+}
+.decor-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 10px 0 4px;
+}
+.decor-pick {
+  background: var(--wood-900);
+  border: 1px solid var(--wood-500);
+  border-radius: 10px;
+  padding: 4px;
+  cursor: pointer;
+}
+.decor-pick:hover {
+  border-color: var(--amber);
+}
+@media (max-width: 520px) {
+  .decor-wrap {
+    width: 82px;
+    min-height: 88px;
+  }
+  .decor {
+    width: 72px;
+    height: 72px;
+  }
+}

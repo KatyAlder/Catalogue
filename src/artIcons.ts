@@ -14,5 +14,21 @@ for (const [path, url] of Object.entries(files)) {
   art[key] = url
 }
 
+/* Декор шафи (вазони, свічки тощо): SVG у src/iconsets/decor/<ключ>.svg.
+   Не колекції: нікуди не ведуть, лише стоять на полицях. */
+const decorFiles = import.meta.glob('./iconsets/decor/*.svg', {
+  eager: true,
+  query: '?url',
+  import: 'default',
+}) as Record<string, string>
+
+const decor: Record<string, string> = {}
+for (const [path, url] of Object.entries(decorFiles)) {
+  decor[path.split('/').pop()!.replace(/\.svg$/, '')] = url
+}
+
+export const DECOR_KEYS = Object.keys(decor)
+export const decorUrl = (key: string): string | undefined => decor[key]
+
 export const ART_KEYS = Object.keys(art)
 export const artUrl = (key: string): string | undefined => art[key]

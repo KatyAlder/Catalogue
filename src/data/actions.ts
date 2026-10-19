@@ -125,6 +125,33 @@ export function moveCollection(id: string, destShelfId: string, overId: string |
   })
 }
 
+/* Декор живе в тому самому списку полиці, що й колекції, з ідентифікатором
+   d:<ключ>:<uid>. Так перетягування, порядок і синхронізація працюють без змін. */
+export const DECOR_PREFIX = 'd:'
+export const isDecorId = (id: string) => id.startsWith(DECOR_PREFIX)
+export const decorKeyOf = (id: string) => id.split(':')[1] ?? ''
+
+export function addDecor(shelfId: string, key: string) {
+  mutate((db) => {
+    const s = db.index.shelves.find((x) => x.id === shelfId)
+    if (!s) return
+    s.collectionIds.push(`${DECOR_PREFIX}${key}:${uid()}`)
+    s.updatedAt = Date.now()
+  })
+}
+
+export function removeDecor(id: string) {
+  mutate((db) => {
+    const t = Date.now()
+    for (const s of db.index.shelves) {
+      if (s.collectionIds.includes(id)) {
+        s.collectionIds = s.collectionIds.filter((x) => x !== id)
+        s.updatedAt = t
+      }
+    }
+  })
+}
+
 export function addShelf(name: string) {
   mutate((db) => {
     const max = Math.max(-1, ...sortedShelves(db).map((s, i) => s.order ?? i))
