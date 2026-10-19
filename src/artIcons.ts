@@ -1,34 +1,35 @@
-/* Кольорові ілюстрації колекцій для головного екрана (шафа).
-   Кладеш SVG у src/iconsets/art/<ключ>.svg: вони підхоплюються автоматично.
-   Ключ збігається з ключем лінійної іконки (bottle, book…), тож на шафі
-   показується ілюстрація, а в списках і формах лишається лінійна. */
-const files = import.meta.glob('./iconsets/art/*.svg', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>
-
-const art: Record<string, string> = {}
-for (const [path, url] of Object.entries(files)) {
-  const key = path.split('/').pop()!.replace(/\.svg$/, '')
-  art[key] = url
+/* Єдина бібліотека кольорових ілюстрацій. SVG підхоплюються автоматично з двох папок:
+     src/iconsets/art/<ключ>.svg    ілюстрації колекцій (пляшечка, книжки…)
+     src/iconsets/decor/<ключ>.svg  декор (вазони, свічки…)
+   Папки лише для порядку: будь-яку ілюстрацію можна і обрати іконкою колекції,
+   і поставити на полицю як декор. Якщо ключ є в обох папках, для колекції
+   береться версія з art, для декору з decor. */
+const load = (files: Record<string, string>): Record<string, string> => {
+  const out: Record<string, string> = {}
+  for (const [path, url] of Object.entries(files)) {
+    out[path.split('/').pop()!.replace(/\.svg$/, '')] = url
+  }
+  return out
 }
 
-/* Декор шафи (вазони, свічки тощо): SVG у src/iconsets/decor/<ключ>.svg.
-   Не колекції: нікуди не ведуть, лише стоять на полицях. */
-const decorFiles = import.meta.glob('./iconsets/decor/*.svg', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>
+const art = load(
+  import.meta.glob('./iconsets/art/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<
+    string,
+    string
+  >,
+)
+const decor = load(
+  import.meta.glob('./iconsets/decor/*.svg', { eager: true, query: '?url', import: 'default' }) as Record<
+    string,
+    string
+  >,
+)
 
-const decor: Record<string, string> = {}
-for (const [path, url] of Object.entries(decorFiles)) {
-  decor[path.split('/').pop()!.replace(/\.svg$/, '')] = url
-}
+/** Ілюстрація для іконки колекції (art, а якщо немає, то з decor). */
+export const artUrl = (key: string): string | undefined => art[key] ?? decor[key]
+/** Ілюстрація для декору на полиці (decor, а якщо немає, то з art). */
+export const decorUrl = (key: string): string | undefined => decor[key] ?? art[key]
 
-export const DECOR_KEYS = Object.keys(decor)
-export const decorUrl = (key: string): string | undefined => decor[key]
-
-export const ART_KEYS = Object.keys(art)
-export const artUrl = (key: string): string | undefined => art[key]
+/** Усі ключі, доступні і як іконка колекції, і як декор. */
+export const ART_KEYS = [...new Set([...Object.keys(art), ...Object.keys(decor)])]
+export const DECOR_KEYS = ART_KEYS
