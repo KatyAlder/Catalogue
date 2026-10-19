@@ -131,6 +131,45 @@ export const DECOR_PREFIX = 'd:'
 export const isDecorId = (id: string) => id.startsWith(DECOR_PREFIX)
 export const decorKeyOf = (id: string) => id.split(':')[1] ?? ''
 
+/* Невидимі проміжки: дають змогу ставити предмети в будь-яке місце полиці,
+   лишаючи вільні місця. Живуть у тому самому списку, ідентифікатор sp:<uid>. */
+export const SPACER_PREFIX = 'sp:'
+export const isSpacerId = (id: string) => id.startsWith(SPACER_PREFIX)
+
+const trimTrailingSpacers = (s: Shelf) => {
+  while (s.collectionIds.length && isSpacerId(s.collectionIds[s.collectionIds.length - 1])) {
+    s.collectionIds.pop()
+  }
+}
+
+/** Поставити предмет у слот полиці (рахуючи від нуля). Якщо слот далі кінця,
+    між останнім предметом і новим автоматично з'являються проміжки;
+    якщо слот зайнятий проміжком, предмет займає його місце. */
+export function moveItemToSlot(id: string, destShelfId: string, slot: number) {
+  mutate((db) => {
+    const shelves = db.index.shelves
+    const src = shelves.find((s) => s.collectionIds.includes(id))
+    const dest = shelves.find((s) => s.id === destShelfId)
+    if (!src || !dest) return
+    src.collectionIds = src.collectionIds.filter((x) => x !== id)
+    const list = dest.collectionIds
+    const at = Math.max(0, slot)
+    if (at >= list.length) {
+      while (list.length < at) list.push(`${SPACER_PREFIX}${uid()}`)
+      list.push(id)
+    } else if (isSpacerId(list[at])) {
+      list[at] = id
+    } else {
+      list.splice(at, 0, id)
+    }
+    trimTrailingSpacers(src)
+    trimTrailingSpacers(dest)
+    const t = Date.now()
+    src.updatedAt = t
+    dest.updatedAt = t
+  })
+}
+
 export function addDecor(shelfId: string, key: string) {
   mutate((db) => {
     const s = db.index.shelves.find((x) => x.id === shelfId)
@@ -179,7 +218,7 @@ export function renameShelf(id: string, name: string) {
 export function deleteShelf(id: string) {
   mutate((db) => {
     const s = db.index.shelves.find((x) => x.id === id)
-    if (!s || s.collectionIds.length) return
+    if (!s || s.collectionIds.some((x) => !isSpacerId(x))) return
     db.index.shelves = db.index.shelves.filter((x) => x.id !== id)
     db.index.deleted[id] = Date.now()
   })

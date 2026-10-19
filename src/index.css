@@ -1182,3 +1182,25 @@ input[type='range'] {
   padding: 0;
   accent-color: var(--amber);
 }
+
+
+/* проміжки на полиці: невидимі, у режимі редагування показані пунктиром */
+.spacer-wrap {
+  position: relative;
+  flex: none;
+  width: 100px;
+  height: 1px;
+}
+.spacer-wrap.editing {
+  height: 88px;
+  border: 2px dashed rgba(217, 160, 91, 0.35);
+  border-radius: 10px;
+}
+@media (max-width: 520px) {
+  .spacer-wrap {
+    width: 86px;
+  }
+  .spacer-wrap.editing {
+    height: 72px;
+  }
+}

@@ -18,7 +18,8 @@ import {
   decorKeyOf,
   deleteShelf,
   isDecorId,
-  moveCollection,
+  isSpacerId,
+  moveItemToSlot,
   moveShelf,
   removeDecor,
   renameShelf,
@@ -33,6 +34,41 @@ import { iconLabel } from '../iconData'
 import { labelCss } from '../labelStyle'
 
 const SHELF_PREFIX = 'shelf:'
+
+/** Куди впав предмет: найближча полиця й номер слота на ній (з урахуванням
+    рядків, на які полиця переноситься на вузьких екранах). */
+function slotAt(cx: number, cy: number): { shelfId: string; slot: number } | null {
+  const rows = [...document.querySelectorAll<HTMLElement>('[data-shelf-row]')]
+  if (!rows.length) return null
+  let best = rows[0]
+  let bestDist = Infinity
+  for (const r of rows) {
+    const b = r.getBoundingClientRect()
+    const d = cy < b.top ? b.top - cy : cy > b.bottom ? cy - b.bottom : 0
+    if (d < bestDist) {
+      bestDist = d
+      best = r
+    }
+  }
+  if (bestDist > 140) return null // кинули далеко від шафи: скасувати
+  const rb = best.getBoundingClientRect()
+  const kids = [...best.children].filter((el): el is HTMLElement => el instanceof HTMLElement && 'item' in el.dataset)
+  const cs = getComputedStyle(best)
+  const gap = parseFloat(cs.columnGap) || 12
+  const padL = parseFloat(cs.paddingLeft) || 0
+  const padR = parseFloat(cs.paddingRight) || 0
+  const itemW = kids.length ? kids[0].getBoundingClientRect().width : 100
+  const slotW = itemW + gap
+  const perRow = Math.max(1, Math.floor((rb.width - padL - padR + gap) / slotW))
+  const rowTops = [...new Set(kids.map((k) => Math.round(k.getBoundingClientRect().top - rb.top)))].sort((a, b) => a - b)
+  const relY = cy - rb.top
+  let rowIdx = 0
+  rowTops.forEach((t, i) => {
+    if (relY >= t - 8) rowIdx = i
+  })
+  const col = Math.min(perRow - 1, Math.max(0, Math.round((cx - rb.left - padL - itemW / 2) / slotW)))
+  return { shelfId: best.dataset.shelfRow!, slot: rowIdx * perRow + col }
+}
 
 function Box({
   c,
@@ -52,6 +88,7 @@ function Box({
   return (
     <div
       ref={setNodeRef}
+      data-item=""
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
       className="box-wrap"
       {...attributes}
@@ -82,6 +119,31 @@ function Box({
   )
 }
 
+function Spacer({ id, editing }: { id: string; editing: boolean }) {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
+  return (
+    <div
+      ref={setNodeRef}
+      data-item=""
+      style={{ transform: CSS.Transform.toString(transform), transition }}
+      className={`spacer-wrap${editing ? ' editing' : ''}`}
+      {...attributes}
+      {...listeners}
+    >
+      {editing && (
+        <button
+          className="decor-x"
+          aria-label="Прибрати проміжок"
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={() => removeDecor(id)}
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  )
+}
+
 function Decor({ id, editing }: { id: string; editing: boolean }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id })
   const url = decorUrl(decorKeyOf(id))
@@ -89,6 +151,7 @@ function Decor({ id, editing }: { id: string; editing: boolean }) {
   return (
     <div
       ref={setNodeRef}
+      data-item=""
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 }}
       className="decor-wrap"
       {...attributes}
@@ -125,9 +188,10 @@ function ShelfRow({
   const { setNodeRef } = useDroppable({ id: SHELF_PREFIX + shelf.id })
   return (
     <SortableContext items={shelf.collectionIds} strategy={rectSortingStrategy}>
-      <div className="shelf-row" ref={setNodeRef}>
-        {shelf.collectionIds.length === 0 && <span className="empty">Полиця порожня</span>}
+      <div className="shelf-row" ref={setNodeRef} data-shelf-row={shelf.id}>
+        {shelf.collectionIds.every(isSpacerId) && <span className="empty">Полиця порожня</span>}
         {shelf.collectionIds.map((id) => {
+          if (isSpacerId(id)) return <Spacer key={id} id={id} editing={editing} />
           if (isDecorId(id)) return <Decor key={id} id={id} editing={editing} />
           const c = byId.get(id)
           return c ? <Box key={id} c={c} caption={captions.get(id)} justDragged={justDragged} /> : null
@@ -161,17 +225,15 @@ export default function Wardrobe() {
   )
 
   const onDragEnd = (e: DragEndEvent) => {
+    // клік, що завершує перетягування, має проігноруватися (іконка може опинитись під курсором)
     justDragged.current = true
-    setTimeout(() => (justDragged.current = false), 0)
-    const { active, over } = e
-    if (!over || active.id === over.id) return
-    const overId = String(over.id)
-    if (overId.startsWith(SHELF_PREFIX)) {
-      moveCollection(String(active.id), overId.slice(SHELF_PREFIX.length), null)
-    } else {
-      const dest = shelves.find((s) => s.collectionIds.includes(overId))
-      if (dest) moveCollection(String(active.id), dest.id, overId)
-    }
+    setTimeout(() => (justDragged.current = false), 300)
+    // місце визначаємо за положенням іконки, а не за найближчим сусідом:
+    // так предмет можна поставити у вільне місце полиці
+    const rect = e.active.rect.current.translated
+    if (!rect) return
+    const target = slotAt(rect.left + rect.width / 2, rect.top + rect.height / 2)
+    if (target) moveItemToSlot(String(e.active.id), target.shelfId, target.slot)
   }
 
   return (
@@ -212,8 +274,8 @@ export default function Wardrobe() {
               <button
                 className="icon-btn danger"
                 onClick={() => deleteShelf(s.id)}
-                disabled={s.collectionIds.length > 0}
-                title={s.collectionIds.length ? 'Спершу прибери або перенеси колекції й декор' : 'Видалити полицю'}
+                disabled={s.collectionIds.some((x) => !isSpacerId(x))}
+                title={s.collectionIds.some((x) => !isSpacerId(x)) ? 'Спершу прибери або перенеси колекції й декор' : 'Видалити полицю'}
                 aria-label="Видалити полицю"
               >
                 ✕
@@ -250,7 +312,16 @@ export default function Wardrobe() {
         </div>
       )}
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={() => {
+          // клік після перетягування може прийти до onDragEnd, тож прапорець ставимо вже на старті
+          justDragged.current = true
+        }}
+        onDragCancel={() => setTimeout(() => (justDragged.current = false), 300)}
+        onDragEnd={onDragEnd}
+      >
         <main className="wardrobe">
           <div className="cabinet-inner">
             {shelves.map((shelf) => (
