@@ -29,7 +29,8 @@ export const PATHS: Record<string, { label: string; d: string[] }> = {
 }
 
 import { ART_KEYS } from './artIcons'
+import { ART_LABELS } from './artLabels'
 
 /** Лінійні іконки плюс ключі, для яких є лише ілюстрація */
-export const ICON_KEYS = [...new Set([...Object.keys(PATHS), ...ART_KEYS])]
-export const iconLabel = (key: string): string => (PATHS[key] ?? { label: key }).label
+export const ICON_KEYS = [...new Set([...ART_KEYS, ...Object.keys(PATHS)])]
+export const iconLabel = (key: string): string => ART_LABELS[key] ?? PATHS[key]?.label ?? key

@@ -29,6 +29,7 @@ import { useAppState } from '../data/store'
 import type { CollectionMeta, Shelf } from '../data/types'
 import { DECOR_KEYS, artUrl, decorUrl } from '../artIcons'
 import { Icon } from '../icons'
+import { iconLabel } from '../iconData'
 import { labelCss } from '../labelStyle'
 
 const SHELF_PREFIX = 'shelf:'
@@ -238,8 +239,8 @@ export default function Wardrobe() {
               </label>
               <div className="decor-grid">
                 {DECOR_KEYS.map((k) => (
-                  <button key={k} className="decor-pick" title={k} onClick={() => addDecor(decorShelf || shelves[0].id, k)}>
-                    <img src={decorUrl(k)} alt={k} width={48} height={48} draggable={false} />
+                  <button key={k} className="decor-pick" title={iconLabel(k)} onClick={() => addDecor(decorShelf || shelves[0].id, k)}>
+                    <img src={decorUrl(k)} alt={iconLabel(k)} width={48} height={48} draggable={false} />
                   </button>
                 ))}
               </div>
