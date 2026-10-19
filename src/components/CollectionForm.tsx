@@ -189,7 +189,7 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
               className={icon === key ? 'active' : ''}
               onClick={() => setIcon(key)}
             >
-              <Icon name={key} size={26} />
+              <Icon name={key} size={30} preferArt />
             </button>
           ))}
         </div>

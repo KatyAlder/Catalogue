@@ -28,5 +28,8 @@ export const PATHS: Record<string, { label: string; d: string[] }> = {
   home: { label: 'Дім', d: ['M3 11l9-7 9 7', 'M5 10v10h14V10', 'M10 20v-6h4v6'] },
 }
 
-export const ICON_KEYS = Object.keys(PATHS)
-export const iconLabel = (key: string): string => (PATHS[key] ?? PATHS.box).label
+import { ART_KEYS } from './artIcons'
+
+/** Лінійні іконки плюс ключі, для яких є лише ілюстрація */
+export const ICON_KEYS = [...new Set([...Object.keys(PATHS), ...ART_KEYS])]
+export const iconLabel = (key: string): string => (PATHS[key] ?? { label: key }).label

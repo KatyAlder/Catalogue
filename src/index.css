@@ -1010,3 +1010,48 @@ table.records {
 .invest-table th {
   white-space: nowrap;
 }
+
+
+/* ілюстрації на шафі: предмет стоїть прямо на полиці, без плитки */
+.box.has-art {
+  width: 112px;
+  height: auto;
+  min-height: 112px;
+  justify-content: flex-end;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  padding: 0 2px;
+}
+.box.has-art:hover {
+  box-shadow: none;
+  transform: translateY(-5px);
+}
+.box-art {
+  width: 88px;
+  height: 88px;
+  object-fit: contain;
+  filter: drop-shadow(0 6px 5px rgba(0, 0, 0, 0.55));
+  transition: filter 0.15s ease;
+  pointer-events: none;
+}
+.box.has-art:hover .box-art {
+  filter: drop-shadow(0 10px 8px rgba(0, 0, 0, 0.6)) drop-shadow(0 0 6px rgba(217, 160, 91, 0.45));
+}
+.box.has-art .box-name {
+  margin-top: 4px;
+  padding: 1px 8px;
+  border-radius: 4px;
+  background: rgba(23, 13, 8, 0.75);
+  border: 1px solid rgba(217, 160, 91, 0.35);
+}
+@media (max-width: 520px) {
+  .box.has-art {
+    width: 96px;
+    min-height: 100px;
+  }
+  .box-art {
+    width: 72px;
+    height: 72px;
+  }
+}

@@ -1,7 +1,23 @@
+import { artUrl } from './artIcons'
 import { PATHS } from './iconData'
 
 /* SVG-іконка колекції: колір береться з currentColor. */
-export function Icon({ name, size = 24, className }: { name: string; size?: number; className?: string }) {
+export function Icon({
+  name,
+  size = 24,
+  className,
+  preferArt,
+}: {
+  name: string
+  size?: number
+  className?: string
+  /** Показати кольорову ілюстрацію, якщо вона є (вибір іконки у формі) */
+  preferArt?: boolean
+}) {
+  const url = artUrl(name)
+  if (url && (preferArt || !PATHS[name])) {
+    return <img src={url} width={size} height={size} alt="" aria-hidden="true" draggable={false} className={className} />
+  }
   const p = PATHS[name] ?? PATHS.box
   return (
     <svg

@@ -23,6 +23,7 @@ import {
 import { agoText, lastSnapshotDate } from '../data/finance'
 import { useAppState } from '../data/store'
 import type { CollectionMeta, Shelf } from '../data/types'
+import { artUrl } from '../artIcons'
 import { Icon } from '../icons'
 
 const SHELF_PREFIX = 'shelf:'
@@ -47,7 +48,7 @@ function Box({
     >
       <Link
         to={`/c/${c.id}`}
-        className="box"
+        className={`box${artUrl(c.icon) ? ' has-art' : ''}`}
         title={c.name}
         draggable={false}
         onClick={(e) => {
@@ -55,9 +56,13 @@ function Box({
           if (justDragged.current) e.preventDefault()
         }}
       >
-        <span className="box-icon">
-          <Icon name={c.icon} size={40} />
-        </span>
+        {artUrl(c.icon) ? (
+          <img className="box-art" src={artUrl(c.icon)} alt="" draggable={false} />
+        ) : (
+          <span className="box-icon">
+            <Icon name={c.icon} size={40} />
+          </span>
+        )}
         <span className="box-name">{c.name}</span>
         {caption && <span className="box-caption">{caption}</span>}
       </Link>
