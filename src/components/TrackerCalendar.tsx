@@ -4,7 +4,7 @@ import { addRecord, deleteRecord } from '../data/recordActions'
 import type { CollectionMeta, RecordItem, SelectOption } from '../data/types'
 import { formatDate } from '../data/view'
 
-/* Піксельний календар. Логіка перенесена зі stable-journal:
+/* Піксельний календар. Логіка перенесена з попереднього додатка:
    - рік (12×31) і місяць;
    - до двох відміток на день; з двома квадрат ділиться діагоналлю навпіл;
    - клік по дню відкриває день; наведення + цифра 1–9 швидко ставить/знімає статус. */

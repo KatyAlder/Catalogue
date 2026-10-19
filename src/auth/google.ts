@@ -1,5 +1,5 @@
 /* Google Identity Services, token-flow зі scope drive.file.
-   Підхід перенесено зі stable-journal: тихе перепідключення,
+   Підхід перенесено з попереднього додатка: тихе перепідключення,
    кеш токена в localStorage, окрема помилка для протухлої сесії. */
 
 export const CLIENT_ID: string = import.meta.env.VITE_GOOGLE_CLIENT_ID ?? ''

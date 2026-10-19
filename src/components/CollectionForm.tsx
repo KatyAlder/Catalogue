@@ -300,7 +300,7 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
-              placeholder="https://katyalder.github.io/stable-journal/stable-journal.html"
+              placeholder="https://example.com"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
             />
