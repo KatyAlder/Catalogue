@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { saveFinanceUpdate, updateFinanceConfig } from '../data/financeActions'
+import { calcInvestment, isValidInvestment } from '../data/investment'
 import { agoText, envelopesOf, fmtMoney, lastSnapshotDate, rateOf, todayISO, totalsOf } from '../data/finance'
 import type { CollectionData, CollectionMeta } from '../data/types'
 import { formatDate } from '../data/view'
 
-export type FinanceTab = 'update' | 'dynamics' | 'rates'
+export type FinanceTab = 'update' | 'dynamics' | 'invest' | 'rates'
 
 interface Props {
   collection: CollectionMeta
@@ -50,6 +51,7 @@ export default function Finance({ collection, data, tab }: Props) {
 
       {tab === 'update' && <QuickUpdate collection={collection} data={data} />}
       {tab === 'dynamics' && <Dynamics collection={collection} data={data} />}
+      {tab === 'invest' && <Investments collection={collection} data={data} />}
       {tab === 'rates' && <Rates collection={collection} />}
     </div>
   )
@@ -299,6 +301,103 @@ function Rates({ collection }: { collection: CollectionMeta }) {
             </label>
           ))}
       </div>
+    </div>
+  )
+}
+
+/* ---------------- інвестиції ---------------- */
+
+const STATUS_TEXT = { upcoming: 'ще не почалась', active: 'триває', finished: 'завершена' } as const
+
+function Investments({ collection, data }: { collection: CollectionMeta; data: CollectionData }) {
+  const f = collection.finance!
+  const [today] = useState(() => new Date())
+
+  const rows = envelopesOf(collection, data.records)
+    .filter((e) => isValidInvestment(e.record.investment))
+    .map((e) => ({ e, inv: e.record.investment!, res: calcInvestment(e.record.investment!, e.amount, today) }))
+
+  if (!rows.length) {
+    return (
+      <p className="muted">
+        Інвестицій ще немає. Відкрий конверт і постав позначку «Це інвестиція або депозит», вкажи ставку, дату
+        початку й строк.
+      </p>
+    )
+  }
+
+  const expected = totalsOf(rows.map((r) => ({ currency: r.e.currency, amount: r.res.expected })), f.baseCurrency, f.rates)
+  const accrued = totalsOf(rows.map((r) => ({ currency: r.e.currency, amount: r.res.accrued })), f.baseCurrency, f.rates)
+
+  return (
+    <div className="card">
+      <h3>Інвестиції</h3>
+      <p className="muted small-label">
+        Сума конверта вважається вкладеною. Розрахунок приблизний: без податків і комісій, нараховано пропорційно
+        дням.
+      </p>
+      <div className="fin-by-cur">
+        <span className="chip-static">
+          Очікуваний дохід: ≈ {fmtMoney(expected.approx)} {f.baseCurrency}
+        </span>
+        <span className="chip-static">
+          Нараховано вже: ≈ {fmtMoney(accrued.approx)} {f.baseCurrency}
+        </span>
+      </div>
+      <div className="table-wrap">
+        <table className="records invest-table">
+          <thead>
+            <tr>
+              <th>Конверт</th>
+              <th>Вкладено</th>
+              <th>Ставка</th>
+              <th>Строк</th>
+              <th>Закінчення</th>
+              <th>Очікуваний дохід</th>
+              <th>Нараховано</th>
+              <th>Стан</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map(({ e, inv, res }) => {
+              const cur = e.currency || f.baseCurrency
+              return (
+                <tr key={e.record.id}>
+                  <td>
+                    <Link to={`/c/${collection.id}/r/${e.record.id}`} className="row-link">
+                      {e.name}
+                    </Link>
+                  </td>
+                  <td>
+                    {fmtMoney(e.amount)} {cur}
+                  </td>
+                  <td>
+                    {fmtMoney(inv.annualRate)}%<span className="muted"> · {inv.compound ? 'склад.' : 'прості'}</span>
+                  </td>
+                  <td>{inv.termMonths} міс.</td>
+                  <td>{formatDate(res.endDate)}</td>
+                  <td>
+                    {fmtMoney(res.expected)} {cur}
+                  </td>
+                  <td>
+                    {fmtMoney(res.accrued)} {cur}
+                  </td>
+                  <td>
+                    {STATUS_TEXT[res.status]}
+                    {res.status === 'active' && <span className="muted"> · ще {res.daysLeft} дн.</span>}
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+      {(expected.missing.length > 0 || accrued.missing.length > 0) && (
+        <p className="error small-label">
+          Для частини валют не задано курс ({[...new Set([...expected.missing, ...accrued.missing])].join(', ')}),
+          у загальні суми вони не входять.
+        </p>
+      )}
     </div>
   )
 }

@@ -104,6 +104,7 @@ export default function CollectionPage() {
               [
                 ['update', 'Оновлення'],
                 ['dynamics', 'Динаміка'],
+                ['invest', 'Інвестиції'],
                 ['rates', 'Курси'],
               ] as const
             ).map(([k, label]) => (

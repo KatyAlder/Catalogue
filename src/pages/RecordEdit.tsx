@@ -35,10 +35,12 @@ export default function RecordEdit() {
         key={record?.id ?? 'new'}
         columns={c.columns}
         initial={initial}
+        investmentEnabled={c.module === 'finance'}
+        initialInvestment={record?.investment}
         onCancel={() => navigate(back)}
-        onSave={(values) => {
-          if (record) updateRecord(c.id, record.id, values)
-          else addRecord(c.id, values)
+        onSave={(values, investment) => {
+          if (record) updateRecord(c.id, record.id, values, investment)
+          else addRecord(c.id, values, investment)
           navigate(back)
         }}
         onDuplicate={

@@ -53,13 +53,22 @@ export interface CollectionMeta {
   updatedAt: number
 }
 
+/** Інвестиційні поля конверта: сума конверта вважається вкладеною сумою. */
+export interface Investment {
+  annualRate: number // річна ставка, %
+  startDate: string // YYYY-MM-DD
+  termMonths: number
+  /** true — складні відсотки з щомісячною капіталізацією, інакше прості */
+  compound?: boolean
+}
+
 export type CellValue = string | number | boolean | null
 
 export interface RecordItem {
   id: string
   values: Record<string, CellValue>
   /** Інвестиційні поля закладені в модель, UI — наступний етап */
-  investment?: { annualRate: number; startDate: string; termMonths: number }
+  investment?: Investment
   createdAt: number
   updatedAt: number
 }
