@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useAppState } from '../data/store'
 import { cellText, recordTitle } from '../data/view'
-import { iconGlyph } from '../icons'
+import { Icon } from '../icons'
 
 /** Пошук по всіх колекціях або лише по вибраних. */
 export default function Search() {
@@ -55,7 +55,7 @@ export default function Search() {
             className={`chip-btn ${scope.has(c.id) ? 'active' : ''}`}
             onClick={() => toggle(c.id)}
           >
-            {iconGlyph(c.icon)} {c.name}
+            <Icon name={c.icon} size={16} /> {c.name}
           </button>
         ))}
       </div>
@@ -64,7 +64,7 @@ export default function Search() {
       {results.map(({ c, records }) => (
         <section key={c.id} className="card search-group">
           <h3>
-            {iconGlyph(c.icon)} {c.name} <span className="muted">· {records.length}</span>
+            <Icon name={c.icon} size={20} /> {c.name} <span className="muted">· {records.length}</span>
           </h3>
           <ul className="col-list">
             {records.map((r) => (

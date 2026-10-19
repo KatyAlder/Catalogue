@@ -8,7 +8,7 @@ import { cloneCollection, deleteCollection } from '../data/actions'
 import { getCollectionData, useAppState } from '../data/store'
 import type { RecordItem } from '../data/types'
 import { buildGroups, emptyView, isFilterable, recordTitle } from '../data/view'
-import { iconGlyph } from '../icons'
+import { Icon } from '../icons'
 
 type Mode = 'table' | 'tiles' | 'calendar' | FinanceTab
 
@@ -83,7 +83,7 @@ export default function CollectionPage() {
         ← До шафи
       </Link>
       <h2>
-        <span className="title-icon">{iconGlyph(c.icon)}</span> {c.name}
+        <Icon name={c.icon} size={28} className="title-icon" /> {c.name}
       </h2>
 
       <div className="toolbar">

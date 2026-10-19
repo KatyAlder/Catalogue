@@ -2,7 +2,8 @@ import { useState } from 'react'
 import type { CollectionDraft } from '../data/actions'
 import type { CollectionModule, Column, ColumnType, SelectOption } from '../data/types'
 import { uid } from '../data/types'
-import { ICONS } from '../icons'
+import { ICON_KEYS, iconLabel } from '../iconData'
+import { Icon } from '../icons'
 
 const TYPE_LABELS: Record<ColumnType, string> = {
   text: 'Текст',
@@ -179,15 +180,16 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
       <div className="field">
         <span>Іконка</span>
         <div className="icon-pick">
-          {Object.entries(ICONS).map(([key, v]) => (
+          {ICON_KEYS.map((key) => (
             <button
               type="button"
               key={key}
-              title={v.label}
+              title={iconLabel(key)}
+              aria-label={iconLabel(key)}
               className={icon === key ? 'active' : ''}
               onClick={() => setIcon(key)}
             >
-              {v.glyph}
+              <Icon name={key} size={26} />
             </button>
           ))}
         </div>

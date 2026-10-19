@@ -23,7 +23,7 @@ import {
 import { agoText, lastSnapshotDate } from '../data/finance'
 import { useAppState } from '../data/store'
 import type { CollectionMeta, Shelf } from '../data/types'
-import { iconGlyph } from '../icons'
+import { Icon } from '../icons'
 
 const SHELF_PREFIX = 'shelf:'
 
@@ -55,7 +55,9 @@ function Box({
           if (justDragged.current) e.preventDefault()
         }}
       >
-        <span className="box-icon">{iconGlyph(c.icon)}</span>
+        <span className="box-icon">
+          <Icon name={c.icon} size={40} />
+        </span>
         <span className="box-name">{c.name}</span>
         {caption && <span className="box-caption">{caption}</span>}
       </Link>
@@ -178,12 +180,14 @@ export default function Wardrobe() {
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <main className="wardrobe">
-          {shelves.map((shelf) => (
-            <section key={shelf.id} className="shelf">
-              {settings.showShelfNames && <h2>{shelf.name}</h2>}
-              <ShelfRow shelf={shelf} byId={byId} captions={captions} justDragged={justDragged} />
-            </section>
-          ))}
+          <div className="cabinet-inner">
+            {shelves.map((shelf) => (
+              <section key={shelf.id} className="shelf">
+                {settings.showShelfNames && <h2>{shelf.name}</h2>}
+                <ShelfRow shelf={shelf} byId={byId} captions={captions} justDragged={justDragged} />
+              </section>
+            ))}
+          </div>
         </main>
       </DndContext>
     </>
