@@ -5,6 +5,8 @@ import { doSignIn, doSignOut, startApp, useAppState } from './data/store'
 import type { SyncStatus } from './data/store'
 import CollectionEdit from './pages/CollectionEdit'
 import CollectionPage from './pages/CollectionPage'
+import RecordEdit from './pages/RecordEdit'
+import Search from './pages/Search'
 import Wardrobe from './pages/Wardrobe'
 
 const STATUS_TEXT: Record<SyncStatus, string> = {
@@ -31,6 +33,9 @@ export default function App() {
           <Link to="/">Шафа</Link>
         </h1>
         <div className="topbar-right">
+          <Link to="/search" className="btn ghost">
+            Пошук
+          </Link>
           <span className={`badge ${status}`}>{STATUS_TEXT[status]}</span>
           {showSignIn && (
             <button className="btn" onClick={() => void doSignIn()}>
@@ -50,6 +55,9 @@ export default function App() {
         <Route path="/new" element={<CollectionEdit />} />
         <Route path="/c/:id" element={<CollectionPage />} />
         <Route path="/c/:id/edit" element={<CollectionEdit />} />
+        <Route path="/c/:id/r/new" element={<RecordEdit />} />
+        <Route path="/c/:id/r/:rid" element={<RecordEdit />} />
+        <Route path="/search" element={<Search />} />
         <Route path="*" element={<Wardrobe />} />
       </Routes>
     </div>

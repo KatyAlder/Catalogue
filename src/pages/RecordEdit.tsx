@@ -1,0 +1,60 @@
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import RecordForm from '../components/RecordForm'
+import { addRecord, deleteRecord, duplicateRecord, updateRecord } from '../data/recordActions'
+import { getCollectionData, useAppState } from '../data/store'
+
+/** Окрема сторінка запису: /c/:id/r/new і /c/:id/r/:rid */
+export default function RecordEdit() {
+  const { id, rid } = useParams()
+  const navigate = useNavigate()
+  const { db } = useAppState()
+  const c = db.index.collections.find((x) => x.id === id)
+  const record = rid ? getCollectionData(db, id ?? '').records.find((r) => r.id === rid) : undefined
+
+  if (!c || (rid && !record)) {
+    return (
+      <p className="notice">
+        Запис не знайдено. <Link to="/">До шафи</Link>
+      </p>
+    )
+  }
+  const back = `/c/${c.id}`
+
+  return (
+    <div className="page">
+      <Link to={back} className="back">
+        ← {c.name}
+      </Link>
+      <h2>{record ? 'Редагування запису' : 'Новий запис'}</h2>
+      <RecordForm
+        key={record?.id ?? 'new'}
+        columns={c.columns}
+        initial={record?.values}
+        onCancel={() => navigate(back)}
+        onSave={(values) => {
+          if (record) updateRecord(c.id, record.id, values)
+          else addRecord(c.id, values)
+          navigate(back)
+        }}
+        onDuplicate={
+          record
+            ? () => {
+                const copyId = duplicateRecord(c.id, record.id)
+                if (copyId) navigate(`${back}/r/${copyId}`)
+              }
+            : undefined
+        }
+        onDelete={
+          record
+            ? () => {
+                if (window.confirm('Видалити цей запис? Це не можна скасувати.')) {
+                  deleteRecord(c.id, record.id)
+                  navigate(back)
+                }
+              }
+            : undefined
+        }
+      />
+    </div>
+  )
+}
