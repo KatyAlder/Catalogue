@@ -151,7 +151,9 @@ export function moveItemToSlot(id: string, destShelfId: string, slot: number) {
     const src = shelves.find((s) => s.collectionIds.includes(id))
     const dest = shelves.find((s) => s.id === destShelfId)
     if (!src || !dest) return
-    src.collectionIds = src.collectionIds.filter((x) => x !== id)
+    // на місці забраного предмета лишається порожнє місце (проміжок)
+    const from = src.collectionIds.indexOf(id)
+    src.collectionIds[from] = `${SPACER_PREFIX}${uid()}`
     const list = dest.collectionIds
     const at = Math.max(0, slot)
     if (at >= list.length) {

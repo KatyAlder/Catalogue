@@ -23,7 +23,8 @@ export interface Column {
 }
 
 /** Необов’язкові модулі колекції. Звичайні колекції мають 'none'. */
-export type CollectionModule = 'none' | 'tracker' | 'finance'
+/** 'link': не колекція, а ярлик на шафі, що відкриває посилання (інший додаток, сайт) */
+export type CollectionModule = 'none' | 'tracker' | 'finance' | 'link'
 
 export interface TrackerConfig {
   dateColumnId: string
@@ -58,6 +59,9 @@ export interface CollectionMeta {
   tracker?: TrackerConfig
   finance?: FinanceConfig
   label?: LabelStyle
+  /** Лише для module 'link' */
+  url?: string
+  newTab?: boolean // за замовчуванням true
   createdAt: number
   updatedAt: number
 }

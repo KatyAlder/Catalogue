@@ -1204,3 +1204,26 @@ input[type='range'] {
     height: 72px;
   }
 }
+
+
+/* ярлики на шафі */
+.box-wrap {
+  position: relative;
+}
+.box-edit {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  z-index: 2;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 1px solid var(--amber);
+  background: var(--wood-900);
+  color: var(--amber);
+  font-size: 12px;
+  cursor: pointer;
+}
+.box-wrap .decor-x {
+  z-index: 2;
+}

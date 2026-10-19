@@ -45,6 +45,25 @@ export default function CollectionPage() {
     setMode(m)
     setModeTouched(true)
   }
+  if (c.module === 'link') {
+    return (
+      <div className="page">
+        <Link to="/" className="back">
+          ← До шафи
+        </Link>
+        <h2>{c.name}</h2>
+        <p className="muted">Це ярлик, а не колекція. Посилання: {c.url}</p>
+        <div className="toolbar">
+          <a className="btn" href={c.url} target="_blank" rel="noopener noreferrer">
+            Відкрити
+          </a>
+          <Link to={`/c/${c.id}/edit`} className="btn ghost">
+            Налаштування
+          </Link>
+        </div>
+      </div>
+    )
+  }
   const shown = groups.flatMap((g) => g.records)
   const filterCols = c.columns.filter(isFilterable)
   const sortable = c.columns.filter((x) => x.type !== 'photo')

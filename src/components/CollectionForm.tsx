@@ -55,12 +55,27 @@ interface Props {
   onCancel: () => void
 }
 
+/** Дозволені лише http/https; без схеми додається https:// */
+function normalizeUrl(raw: string): string | null {
+  const t = raw.trim()
+  if (!t) return null
+  try {
+    const u = new URL(/^[a-z][a-z0-9+.-]*:/i.test(t) ? t : `https://${t}`)
+    return u.protocol === 'http:' || u.protocol === 'https:' ? u.href : null
+  } catch {
+    return null
+  }
+}
+
 export default function CollectionForm({ initial, mode, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [icon, setIcon] = useState(initial?.icon ?? 'box')
   const [module, setModule] = useState<CollectionModule>(initial?.module ?? 'none')
   const isTracker = module === 'tracker'
   const isFinance = module === 'finance'
+  const isLink = module === 'link'
+  const [url, setUrl] = useState(initial?.url ?? '')
+  const [newTab, setNewTab] = useState(initial?.newTab ?? true)
   const [columns, setColumns] = useState<Column[]>(initial?.columns ?? [])
   const [dateCol, setDateCol] = useState(initial?.tracker?.dateColumnId ?? '')
   const [statusCol, setStatusCol] = useState(initial?.tracker?.statusColumnId ?? '')
@@ -105,6 +120,10 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
       setCurrencyCol(f.currency.id)
       return
     }
+    if (m === 'link') {
+      setColumns([])
+      return
+    }
     if (m !== 'tracker') return
     // підставити стандартні стовпці, якщо потрібних типів ще немає
     setColumns((cs) => {
@@ -128,6 +147,11 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
   const submit = () => {
     const trimmed = name.trim()
     if (!trimmed) return setError('Дай колекції назву')
+    if (isLink) {
+      const href = normalizeUrl(url)
+      if (!href) return setError('Вкажи коректне посилання (http:// або https://)')
+      return onSave({ name: trimmed, icon, module: 'link', columns: [], url: href, newTab, label: compactLabel({ position: labelPos, font: labelFont, size: labelSize, color: labelColor || undefined }) })
+    }
     if (!columns.length) return setError('Додай хоча б один стовпець')
     if (columns.some((c) => !c.name.trim())) return setError('У кожного стовпця має бути назва')
     for (const c of columns) {
@@ -260,10 +284,36 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
             <option value="none">Звичайна</option>
             <option value="tracker">Трекер із піксельним календарем (дата + статус із кольорами)</option>
             <option value="finance">Фінанси (конверти, знімки, динаміка)</option>
+            <option value="link">Ярлик (відкриває посилання, напр. інший додаток)</option>
           </select>
         </div>
       )}
 
+      {isLink && (
+        <div className="tracker-cfg">
+          <h3>Ярлик</h3>
+          <label className="field">
+            <span>Посилання</span>
+            <input
+              type="text"
+              inputMode="url"
+              autoCapitalize="none"
+              autoCorrect="off"
+              spellCheck={false}
+              placeholder="https://katyalder.github.io/stable-journal/stable-journal.html"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+            />
+          </label>
+          <label className="check">
+            <input type="checkbox" checked={newTab} onChange={(e) => setNewTab(e.target.checked)} />
+            <span>Відкривати в новій вкладці</span>
+          </label>
+        </div>
+      )}
+
+      {!isLink && (
+        <>
       <h3>Стовпці</h3>
       {columns.map((c, i) => (
         <div className="col-row" key={c.id}>
@@ -370,6 +420,8 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
       <button type="button" className="btn ghost" onClick={addColumn}>
         + Стовпець
       </button>
+        </>
+      )}
 
       {isTracker && (
         <div className="tracker-cfg">

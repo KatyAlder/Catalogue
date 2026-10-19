@@ -7,7 +7,7 @@ import { Icon } from '../icons'
 /** Пошук по всіх колекціях або лише по вибраних. */
 export default function Search() {
   const { db } = useAppState()
-  const collections = db.index.collections
+  const collections = db.index.collections.filter((c) => c.module !== 'link')
   const [q, setQ] = useState('')
   const [scope, setScope] = useState<Set<string>>(new Set()) // порожньо = усі
 

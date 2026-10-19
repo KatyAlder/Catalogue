@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import {
   DndContext,
   MouseSensor,
@@ -16,6 +16,7 @@ import {
   addDecor,
   addShelf,
   decorKeyOf,
+  deleteCollection,
   deleteShelf,
   isDecorId,
   isSpacerId,
@@ -74,17 +75,40 @@ function Box({
   c,
   caption,
   justDragged,
+  editing,
 }: {
   c: CollectionMeta
   caption?: string
   justDragged: React.RefObject<boolean>
+  editing: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id })
+  const navigate = useNavigate()
   const nameEl = (
     <span className="box-name" style={labelCss(c.label)}>
       {c.name}
     </span>
   )
+  const isLink = c.module === 'link' && !!c.url
+  const className = `box${artUrl(c.icon) ? ' has-art' : ''}`
+  const inner = (
+    <>
+      {c.label?.position === 'above' && nameEl}
+      {artUrl(c.icon) ? (
+        <img className="box-art" src={artUrl(c.icon)} alt="" draggable={false} />
+      ) : (
+        <span className="box-icon">
+          <Icon name={c.icon} size={40} />
+        </span>
+      )}
+      {c.label?.position !== 'above' && nameEl}
+      {caption && <span className="box-caption">{caption}</span>}
+    </>
+  )
+  // клік, що завершує перетягування, не має відкривати колекцію чи ярлик
+  const guard = (e: React.MouseEvent) => {
+    if (justDragged.current || (isLink && editing)) e.preventDefault()
+  }
   return (
     <div
       ref={setNodeRef}
@@ -94,27 +118,45 @@ function Box({
       {...attributes}
       {...listeners}
     >
-      <Link
-        to={`/c/${c.id}`}
-        className={`box${artUrl(c.icon) ? ' has-art' : ''}`}
-        title={c.name}
-        draggable={false}
-        onClick={(e) => {
-          // клік, що завершує перетягування, не має відкривати колекцію
-          if (justDragged.current) e.preventDefault()
-        }}
-      >
-        {c.label?.position === 'above' && nameEl}
-        {artUrl(c.icon) ? (
-          <img className="box-art" src={artUrl(c.icon)} alt="" draggable={false} />
-        ) : (
-          <span className="box-icon">
-            <Icon name={c.icon} size={40} />
-          </span>
-        )}
-        {c.label?.position !== 'above' && nameEl}
-        {caption && <span className="box-caption">{caption}</span>}
-      </Link>
+      {isLink ? (
+        <a
+          href={c.url}
+          target={c.newTab === false ? undefined : '_blank'}
+          rel="noopener noreferrer"
+          className={className}
+          title={`${c.name}: ${c.url}`}
+          draggable={false}
+          onClick={guard}
+        >
+          {inner}
+        </a>
+      ) : (
+        <Link to={`/c/${c.id}`} className={className} title={c.name} draggable={false} onClick={guard}>
+          {inner}
+        </Link>
+      )}
+      {isLink && editing && (
+        <>
+          <button
+            className="box-edit"
+            aria-label="Змінити ярлик"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => navigate(`/c/${c.id}/edit`)}
+          >
+            ✎
+          </button>
+          <button
+            className="decor-x"
+            aria-label="Видалити ярлик"
+            onPointerDown={(e) => e.stopPropagation()}
+            onClick={() => {
+              if (window.confirm(`Видалити ярлик «${c.name}»?`)) deleteCollection(c.id)
+            }}
+          >
+            ✕
+          </button>
+        </>
+      )}
     </div>
   )
 }
@@ -194,7 +236,7 @@ function ShelfRow({
           if (isSpacerId(id)) return <Spacer key={id} id={id} editing={editing} />
           if (isDecorId(id)) return <Decor key={id} id={id} editing={editing} />
           const c = byId.get(id)
-          return c ? <Box key={id} c={c} caption={captions.get(id)} justDragged={justDragged} /> : null
+          return c ? <Box key={id} c={c} caption={captions.get(id)} justDragged={justDragged} editing={editing} /> : null
         })}
       </div>
     </SortableContext>
