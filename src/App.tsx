@@ -1,7 +1,11 @@
 import { useEffect } from 'react'
+import { Link, Route, Routes } from 'react-router-dom'
 import { CLIENT_ID } from './auth/google'
 import { doSignIn, doSignOut, startApp, useAppState } from './data/store'
 import type { SyncStatus } from './data/store'
+import CollectionEdit from './pages/CollectionEdit'
+import CollectionPage from './pages/CollectionPage'
+import Wardrobe from './pages/Wardrobe'
 
 const STATUS_TEXT: Record<SyncStatus, string> = {
   local: 'локально',
@@ -12,7 +16,7 @@ const STATUS_TEXT: Record<SyncStatus, string> = {
 }
 
 export default function App() {
-  const { db, status, signedIn, message } = useAppState()
+  const { status, signedIn, message } = useAppState()
 
   useEffect(() => {
     void startApp()
@@ -23,7 +27,9 @@ export default function App() {
   return (
     <div className="app">
       <header className="topbar">
-        <h1>Шафа</h1>
+        <h1>
+          <Link to="/">Шафа</Link>
+        </h1>
         <div className="topbar-right">
           <span className={`badge ${status}`}>{STATUS_TEXT[status]}</span>
           {showSignIn && (
@@ -39,18 +45,13 @@ export default function App() {
         </div>
       </header>
       {message && <p className="notice">{message}</p>}
-      <main className="wardrobe">
-        {db.index.shelves.map((shelf) => (
-          <section key={shelf.id} className="shelf">
-            {db.index.settings.showShelfNames && <h2>{shelf.name}</h2>}
-            <div className="shelf-row">
-              {shelf.collectionIds.length === 0 && (
-                <span className="empty">Полиця порожня</span>
-              )}
-            </div>
-          </section>
-        ))}
-      </main>
+      <Routes>
+        <Route path="/" element={<Wardrobe />} />
+        <Route path="/new" element={<CollectionEdit />} />
+        <Route path="/c/:id" element={<CollectionPage />} />
+        <Route path="/c/:id/edit" element={<CollectionEdit />} />
+        <Route path="*" element={<Wardrobe />} />
+      </Routes>
     </div>
   )
 }
