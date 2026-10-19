@@ -1,4 +1,4 @@
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import RecordForm from '../components/RecordForm'
 import { addRecord, deleteRecord, duplicateRecord, updateRecord } from '../data/recordActions'
 import { getCollectionData, useAppState } from '../data/store'
@@ -7,6 +7,7 @@ import { getCollectionData, useAppState } from '../data/store'
 export default function RecordEdit() {
   const { id, rid } = useParams()
   const navigate = useNavigate()
+  const [params] = useSearchParams()
   const { db } = useAppState()
   const c = db.index.collections.find((x) => x.id === id)
   const record = rid ? getCollectionData(db, id ?? '').records.find((r) => r.id === rid) : undefined
@@ -19,6 +20,10 @@ export default function RecordEdit() {
     )
   }
   const back = `/c/${c.id}`
+  // нова відмітка з календаря: дата передається в адресі (?d=YYYY-MM-DD)
+  const presetDate = params.get('d')
+  const initial =
+    record?.values ?? (presetDate && c.tracker ? { [c.tracker.dateColumnId]: presetDate } : undefined)
 
   return (
     <div className="page">
@@ -29,7 +34,7 @@ export default function RecordEdit() {
       <RecordForm
         key={record?.id ?? 'new'}
         columns={c.columns}
-        initial={record?.values}
+        initial={initial}
         onCancel={() => navigate(back)}
         onSave={(values) => {
           if (record) updateRecord(c.id, record.id, values)

@@ -79,6 +79,8 @@ export interface Shelf {
   name: string
   collectionIds: string[]
   isTrackerShelf?: boolean
+  /** Порядок полиць; за відсутності — порядок у масиві */
+  order?: number
   updatedAt: number
 }
 

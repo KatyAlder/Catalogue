@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { RecordsTable, RecordsTiles } from '../components/RecordViews'
+import TrackerCalendar from '../components/TrackerCalendar'
 import { cloneCollection, deleteCollection } from '../data/actions'
 import { getCollectionData, useAppState } from '../data/store'
 import type { RecordItem } from '../data/types'
 import { buildGroups, emptyView, isFilterable, recordTitle } from '../data/view'
 import { iconGlyph } from '../icons'
 
-type Mode = 'table' | 'tiles'
+type Mode = 'table' | 'tiles' | 'calendar'
 
 export default function CollectionPage() {
   const { id } = useParams()
@@ -16,6 +17,7 @@ export default function CollectionPage() {
   const c = db.index.collections.find((x) => x.id === id)
 
   const [mode, setMode] = useState<Mode>('table')
+  const [modeTouched, setModeTouched] = useState(false)
   const [view, setView] = useState(emptyView())
   const [picked, setPicked] = useState<RecordItem | null>(null)
 
@@ -33,6 +35,12 @@ export default function CollectionPage() {
     )
   }
 
+  const isTracker = c.module === 'tracker' && !!c.tracker
+  const effMode: Mode = isTracker && !modeTouched ? 'calendar' : mode
+  const chooseMode = (m: Mode) => {
+    setMode(m)
+    setModeTouched(true)
+  }
   const shown = groups.flatMap((g) => g.records)
   const filterCols = c.columns.filter(isFilterable)
   const sortable = c.columns.filter((x) => x.type !== 'photo')
@@ -82,10 +90,15 @@ export default function CollectionPage() {
           🎲 Випадковий
         </button>
         <div className="seg">
-          <button className={mode === 'table' ? 'active' : ''} onClick={() => setMode('table')}>
+          {isTracker && (
+            <button className={effMode === 'calendar' ? 'active' : ''} onClick={() => chooseMode('calendar')}>
+              Календар
+            </button>
+          )}
+          <button className={effMode === 'table' ? 'active' : ''} onClick={() => chooseMode('table')}>
             Таблиця
           </button>
-          <button className={mode === 'tiles' ? 'active' : ''} onClick={() => setMode('tiles')}>
+          <button className={effMode === 'tiles' ? 'active' : ''} onClick={() => chooseMode('tiles')}>
             Плитка
           </button>
         </div>
@@ -100,6 +113,9 @@ export default function CollectionPage() {
         </button>
       </div>
 
+      {effMode === 'calendar' && <TrackerCalendar collection={c} records={data.records} />}
+
+      {effMode !== 'calendar' && (
       <div className="controls">
         <input
           type="search"
@@ -167,6 +183,7 @@ export default function CollectionPage() {
           </button>
         )}
       </div>
+      )}
 
       {picked && (
         <div className="picked">
@@ -185,11 +202,11 @@ export default function CollectionPage() {
         </div>
       )}
 
-      {data.records.length === 0 ? (
+      {effMode === 'calendar' ? null : data.records.length === 0 ? (
         <p className="muted">Записів ще немає. Натисни «+ Запис».</p>
       ) : shown.length === 0 ? (
         <p className="muted">Нічого не знайдено за цими умовами.</p>
-      ) : mode === 'table' ? (
+      ) : effMode === 'table' ? (
         <RecordsTable collectionId={c.id} columns={c.columns} groups={groups} view={view} onSort={onSort} />
       ) : (
         <RecordsTiles collectionId={c.id} columns={c.columns} groups={groups} view={view} onSort={onSort} />

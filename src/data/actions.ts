@@ -99,3 +99,84 @@ export function cloneCollection(id: string, withData: boolean): string | null {
   )
   return ok ? newId : null
 }
+
+/* ---------------- полиці ---------------- */
+
+const sortedShelves = (db: LocalDB) =>
+  [...db.index.shelves].sort(
+    (a, b) => (a.order ?? db.index.shelves.indexOf(a)) - (b.order ?? db.index.shelves.indexOf(b)),
+  )
+
+/** Перемістити колекцію на полицю; overId — колекція, перед якою вставити (null — у кінець). */
+export function moveCollection(id: string, destShelfId: string, overId: string | null) {
+  mutate((db) => {
+    const shelves = db.index.shelves
+    const src = shelves.find((s) => s.collectionIds.includes(id))
+    const dest = shelves.find((s) => s.id === destShelfId)
+    if (!src || !dest) return
+    const from = src.collectionIds.indexOf(id)
+    let to = overId ? dest.collectionIds.indexOf(overId) : -1
+    if (to < 0) to = src === dest ? dest.collectionIds.length - 1 : dest.collectionIds.length
+    src.collectionIds.splice(from, 1)
+    dest.collectionIds.splice(to, 0, id)
+    const t = Date.now()
+    src.updatedAt = t
+    dest.updatedAt = t
+  })
+}
+
+export function addShelf(name: string) {
+  mutate((db) => {
+    const max = Math.max(-1, ...sortedShelves(db).map((s, i) => s.order ?? i))
+    db.index.shelves.push({
+      id: uid(),
+      name: name || 'Нова полиця',
+      collectionIds: [],
+      order: max + 1,
+      updatedAt: Date.now(),
+    })
+  })
+}
+
+export function renameShelf(id: string, name: string) {
+  mutate((db) => {
+    const s = db.index.shelves.find((x) => x.id === id)
+    if (s) {
+      s.name = name
+      s.updatedAt = Date.now()
+    }
+  })
+}
+
+/** Видаляється лише порожня полиця. */
+export function deleteShelf(id: string) {
+  mutate((db) => {
+    const s = db.index.shelves.find((x) => x.id === id)
+    if (!s || s.collectionIds.length) return
+    db.index.shelves = db.index.shelves.filter((x) => x.id !== id)
+    db.index.deleted[id] = Date.now()
+  })
+}
+
+export function moveShelf(id: string, dir: -1 | 1) {
+  mutate((db) => {
+    const list = sortedShelves(db)
+    const i = list.findIndex((s) => s.id === id)
+    const j = i + dir
+    if (i < 0 || j < 0 || j >= list.length) return
+    ;[list[i], list[j]] = [list[j], list[i]]
+    const t = Date.now()
+    list.forEach((s, k) => {
+      if (s.order !== k) {
+        s.order = k
+        s.updatedAt = t
+      }
+    })
+  })
+}
+
+export function setShowShelfNames(show: boolean) {
+  mutate((db) => {
+    db.index.settings = { showShelfNames: show, updatedAt: Date.now() }
+  })
+}

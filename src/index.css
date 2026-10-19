@@ -535,3 +535,217 @@ table.records th button {
 .tile-field dd {
   min-width: 0;
 }
+
+/* шафа: режим редагування полиць і перетягування */
+.box-wrap {
+  touch-action: manipulation;
+}
+.shelf-edit {
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 14px;
+}
+.shelf-edit-row {
+  display: flex;
+  gap: 6px;
+}
+.shelf-edit-row input {
+  flex: 1;
+}
+.icon-btn:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+/* піксельний календар */
+.cal-controls {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 10px 0 14px;
+}
+.yearnav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.grid-wrap {
+  overflow-x: auto;
+}
+.ygrid {
+  display: grid;
+  grid-template-columns: 56px repeat(31, minmax(14px, 1fr));
+  gap: 3px;
+  min-width: 560px;
+}
+.dlabel {
+  font-size: 10px;
+  text-align: center;
+  color: var(--muted);
+}
+.mlabel {
+  font-size: 13px;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+}
+.mabbr {
+  display: none;
+}
+.pix {
+  aspect-ratio: 1;
+  border-radius: 3px;
+  background: var(--wood-900);
+  border: 1px solid var(--wood-700);
+  cursor: pointer;
+}
+.pix.void {
+  visibility: hidden;
+}
+.pix.today,
+.mcell.today {
+  outline: 2px solid var(--amber);
+  outline-offset: 1px;
+}
+.mgrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+.wd {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+.mcell {
+  min-height: 62px;
+  background: var(--wood-900);
+  border: 1px solid var(--wood-700);
+  border-radius: 8px;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+.mcell.empty {
+  visibility: hidden;
+}
+.mcell:hover,
+.pix:hover {
+  border-color: var(--amber);
+}
+.dn {
+  font-size: 12px;
+  color: var(--muted);
+}
+.chips {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+.mchip {
+  flex: 1;
+  height: 14px;
+  border-radius: 4px;
+}
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin-top: 14px;
+  font-size: 14px;
+}
+.li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.num {
+  font-size: 11px;
+  border: 1px solid var(--wood-500);
+  border-radius: 4px;
+  padding: 0 5px;
+  color: var(--muted);
+}
+.sw {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 4px;
+}
+.toast {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--wood-700);
+  border: 1px solid var(--amber);
+  border-radius: 10px;
+  padding: 10px 16px;
+  z-index: 30;
+}
+.modal-bg {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 20;
+}
+.modal {
+  background: var(--wood-800);
+  border: 1px solid var(--amber);
+  border-radius: 12px;
+  padding: 16px 18px;
+  width: 100%;
+  max-width: 380px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal h3 {
+  margin-top: 0;
+  color: var(--amber);
+}
+.mark-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+.small-label {
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+.status-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.chip-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.chip-btn .sw {
+  width: 10px;
+  height: 10px;
+  vertical-align: middle;
+}
+@media (max-width: 520px) {
+  .mfull {
+    display: none;
+  }
+  .mabbr {
+    display: inline;
+  }
+  .ygrid {
+    grid-template-columns: 34px repeat(31, minmax(14px, 1fr));
+  }
+  .mcell {
+    min-height: 52px;
+    padding: 3px;
+  }
+}
