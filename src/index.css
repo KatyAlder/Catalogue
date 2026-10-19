@@ -749,3 +749,72 @@ table.records th button {
     padding: 3px;
   }
 }
+
+/* фінанси */
+.box-caption {
+  font-size: 10px;
+  color: var(--muted);
+  line-height: 1.1;
+}
+.fin-summary {
+  margin-bottom: 14px;
+  padding-top: 14px;
+}
+.fin-total {
+  display: flex;
+  flex-direction: column;
+}
+.fin-total strong {
+  font-size: 28px;
+  color: var(--amber);
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.fin-by-cur {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.chip-static {
+  background: var(--wood-700);
+  border: 1px solid var(--wood-500);
+  border-radius: 999px;
+  padding: 2px 12px;
+  font-size: 14px;
+}
+.upd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+.upd-row {
+  display: grid;
+  grid-template-columns: 1fr 140px 56px;
+  gap: 10px;
+  align-items: center;
+}
+.upd-row input {
+  text-align: right;
+}
+.upd-cur {
+  color: var(--muted);
+}
+.upd-actions {
+  align-items: center;
+  flex-wrap: wrap;
+}
+.ok {
+  color: #8fbf7a;
+}
+.chart {
+  margin-top: 8px;
+}
+.field.narrow {
+  max-width: 200px;
+}
+@media (max-width: 520px) {
+  .upd-row {
+    grid-template-columns: 1fr 110px 44px;
+  }
+}

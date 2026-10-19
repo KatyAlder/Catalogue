@@ -31,6 +31,11 @@ export interface TrackerConfig {
 }
 
 export interface FinanceConfig {
+  /** Які стовпці колекції відповідають за назву, суму й валюту конверта */
+  nameColumnId: string
+  amountColumnId: string
+  currencyColumnId: string
+  /** Код базової валюти, збігається з підписом варіанта у стовпці валюти */
   baseCurrency: string
   /** Приблизні курси до базової валюти: { USD: 41.5 } */
   rates: Record<string, number>
@@ -64,6 +69,8 @@ export interface Snapshot {
   id: string
   date: string // YYYY-MM-DD
   amounts: Record<string, number> // recordId -> сума
+  /** Валюта конверта на момент знімка: recordId -> код */
+  currencies?: Record<string, string>
   updatedAt: number
 }
 

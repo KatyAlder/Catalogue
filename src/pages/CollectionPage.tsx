@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { RecordsTable, RecordsTiles } from '../components/RecordViews'
+import Finance from '../components/Finance'
+import type { FinanceTab } from '../components/Finance'
 import TrackerCalendar from '../components/TrackerCalendar'
 import { cloneCollection, deleteCollection } from '../data/actions'
 import { getCollectionData, useAppState } from '../data/store'
@@ -8,7 +10,7 @@ import type { RecordItem } from '../data/types'
 import { buildGroups, emptyView, isFilterable, recordTitle } from '../data/view'
 import { iconGlyph } from '../icons'
 
-type Mode = 'table' | 'tiles' | 'calendar'
+type Mode = 'table' | 'tiles' | 'calendar' | FinanceTab
 
 export default function CollectionPage() {
   const { id } = useParams()
@@ -36,7 +38,9 @@ export default function CollectionPage() {
   }
 
   const isTracker = c.module === 'tracker' && !!c.tracker
-  const effMode: Mode = isTracker && !modeTouched ? 'calendar' : mode
+  const isFinance = c.module === 'finance' && !!c.finance
+  const effMode: Mode = modeTouched ? mode : isTracker ? 'calendar' : isFinance ? 'update' : mode
+  const isRecordsView = effMode === 'table' || effMode === 'tiles'
   const chooseMode = (m: Mode) => {
     setMode(m)
     setModeTouched(true)
@@ -95,6 +99,18 @@ export default function CollectionPage() {
               Календар
             </button>
           )}
+          {isFinance &&
+            (
+              [
+                ['update', 'Оновлення'],
+                ['dynamics', 'Динаміка'],
+                ['rates', 'Курси'],
+              ] as const
+            ).map(([k, label]) => (
+              <button key={k} className={effMode === k ? 'active' : ''} onClick={() => chooseMode(k)}>
+                {label}
+              </button>
+            ))}
           <button className={effMode === 'table' ? 'active' : ''} onClick={() => chooseMode('table')}>
             Таблиця
           </button>
@@ -114,8 +130,9 @@ export default function CollectionPage() {
       </div>
 
       {effMode === 'calendar' && <TrackerCalendar collection={c} records={data.records} />}
+      {isFinance && !isRecordsView && <Finance collection={c} data={data} tab={effMode as FinanceTab} />}
 
-      {effMode !== 'calendar' && (
+      {isRecordsView && (
       <div className="controls">
         <input
           type="search"
@@ -202,7 +219,7 @@ export default function CollectionPage() {
         </div>
       )}
 
-      {effMode === 'calendar' ? null : data.records.length === 0 ? (
+      {!isRecordsView ? null : data.records.length === 0 ? (
         <p className="muted">Записів ще немає. Натисни «+ Запис».</p>
       ) : shown.length === 0 ? (
         <p className="muted">Нічого не знайдено за цими умовами.</p>

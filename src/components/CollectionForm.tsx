@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import type { CollectionDraft } from '../data/actions'
-import type { Column, ColumnType, SelectOption } from '../data/types'
+import type { CollectionModule, Column, ColumnType, SelectOption } from '../data/types'
 import { uid } from '../data/types'
 import { ICONS } from '../icons'
 
@@ -25,6 +25,26 @@ const defaultStatusOptions = (): SelectOption[] => [
   { id: uid(), label: 'План', color: PALETTE[3] },
 ]
 
+const financeColumns = () => {
+  const opt = (label: string, color?: string): SelectOption => ({ id: uid(), label, color })
+  const name: Column = { id: uid(), name: 'Назва конверта', type: 'text' }
+  const place: Column = {
+    id: uid(),
+    name: 'Де лежить',
+    type: 'select',
+    options: [opt('Карта'), opt('Готівка'), opt('Депозит'), opt('Інше')],
+  }
+  const currency: Column = {
+    id: uid(),
+    name: 'Валюта',
+    type: 'select',
+    options: [opt('UAH'), opt('EUR'), opt('USD'), opt('PLN')],
+  }
+  const amount: Column = { id: uid(), name: 'Сума', type: 'number' }
+  const note: Column = { id: uid(), name: 'Примітка', type: 'text' }
+  return { columns: [name, place, currency, amount, note], name, currency, amount }
+}
+
 interface Props {
   /** Початкові значення; у режимі редагування — поточна колекція */
   initial?: CollectionDraft
@@ -36,10 +56,15 @@ interface Props {
 export default function CollectionForm({ initial, mode, onSave, onCancel }: Props) {
   const [name, setName] = useState(initial?.name ?? '')
   const [icon, setIcon] = useState(initial?.icon ?? 'box')
-  const [isTracker, setIsTracker] = useState(initial?.module === 'tracker')
+  const [module, setModule] = useState<CollectionModule>(initial?.module ?? 'none')
+  const isTracker = module === 'tracker'
+  const isFinance = module === 'finance'
   const [columns, setColumns] = useState<Column[]>(initial?.columns ?? [])
   const [dateCol, setDateCol] = useState(initial?.tracker?.dateColumnId ?? '')
   const [statusCol, setStatusCol] = useState(initial?.tracker?.statusColumnId ?? '')
+  const [nameCol, setNameCol] = useState(initial?.finance?.nameColumnId ?? '')
+  const [amountCol, setAmountCol] = useState(initial?.finance?.amountColumnId ?? '')
+  const [currencyCol, setCurrencyCol] = useState(initial?.finance?.currencyColumnId ?? '')
   const [error, setError] = useState('')
 
   const patchCol = (id: string, patch: Partial<Column>) =>
@@ -64,9 +89,17 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
     patchCol(c.id, patch)
   }
 
-  const toggleTracker = (on: boolean) => {
-    setIsTracker(on)
-    if (!on) return
+  const chooseModule = (m: CollectionModule) => {
+    setModule(m)
+    if (m === 'finance') {
+      const f = financeColumns()
+      setColumns(f.columns)
+      setNameCol(f.name.id)
+      setAmountCol(f.amount.id)
+      setCurrencyCol(f.currency.id)
+      return
+    }
+    if (m !== 'tracker') return
     // підставити стандартні стовпці, якщо потрібних типів ще немає
     setColumns((cs) => {
       let next = cs
@@ -103,13 +136,27 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
         return setError('Для календаря обери стовпець-список із варіантами статусів')
       if (s.options.some((o) => !o.color)) return setError('Кожному статусу потрібен колір')
     }
+    if (isFinance) {
+      if (columns.find((c) => c.id === nameCol)?.type !== 'text') return setError('Для фінансів обери текстовий стовпець назви')
+      if (columns.find((c) => c.id === amountCol)?.type !== 'number') return setError('Для фінансів обери числовий стовпець суми')
+      const cur = columns.find((c) => c.id === currencyCol)
+      if (cur?.type !== 'select' || !cur.options?.length) return setError('Для фінансів обери стовпець-список валют')
+    }
     onSave({
       name: trimmed,
       icon,
-      module: isTracker ? 'tracker' : 'none',
+      module,
       columns: columns.map((c) => ({ ...c, name: c.name.trim() })),
       tracker: isTracker ? { dateColumnId: dateCol, statusColumnId: statusCol } : undefined,
-      finance: initial?.finance,
+      finance: isFinance
+        ? {
+            baseCurrency: initial?.finance?.baseCurrency ?? 'UAH',
+            rates: initial?.finance?.rates ?? {},
+            nameColumnId: nameCol,
+            amountColumnId: amountCol,
+            currencyColumnId: currencyCol,
+          }
+        : undefined,
     })
   }
 
@@ -147,13 +194,14 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
       </div>
 
       {mode === 'create' && (
-        <label className="check">
-          <input type="checkbox" checked={isTracker} onChange={(e) => toggleTracker(e.target.checked)} />
-          <span>
-            Піксельний календар (для трекерів: дата + статус із кольорами). Увімкнути можна лише
-            тепер, при створенні.
-          </span>
-        </label>
+        <div className="field">
+          <span>Тип колекції (обирається лише при створенні)</span>
+          <select value={module} onChange={(e) => chooseModule(e.target.value as CollectionModule)}>
+            <option value="none">Звичайна</option>
+            <option value="tracker">Трекер із піксельним календарем (дата + статус із кольорами)</option>
+            <option value="finance">Фінанси (конверти, знімки, динаміка)</option>
+          </select>
+        </div>
       )}
 
       <h3>Стовпці</h3>
@@ -186,6 +234,8 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
             <button
               type="button"
               className="icon-btn danger"
+              disabled={isFinance && [nameCol, amountCol, currencyCol].includes(c.id)}
+              title={isFinance && [nameCol, amountCol, currencyCol].includes(c.id) ? 'Цей стовпець потрібен модулю «Фінанси»' : ''}
               onClick={() => setColumns((cs) => cs.filter((x) => x.id !== c.id))}
               aria-label="Видалити стовпець"
             >
@@ -286,6 +336,33 @@ export default function CollectionForm({ initial, mode, onSave, onCancel }: Prop
               ))}
             </select>
           </label>
+        </div>
+      )}
+
+      {isFinance && (
+        <div className="tracker-cfg">
+          <h3>Фінанси</h3>
+          {(
+            [
+              ['Стовпець із назвою конверта', nameCol, setNameCol, 'text'],
+              ['Стовпець із сумою', amountCol, setAmountCol, 'number'],
+              ['Стовпець із валютою (підпис варіанта = код, напр. UAH)', currencyCol, setCurrencyCol, 'select'],
+            ] as const
+          ).map(([label, value, set, type]) => (
+            <label className="field" key={label}>
+              <span>{label}</span>
+              <select value={value} onChange={(e) => set(e.target.value)}>
+                <option value="">—</option>
+                {columns
+                  .filter((c) => c.type === type)
+                  .map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name || '(без назви)'}
+                    </option>
+                  ))}
+              </select>
+            </label>
+          ))}
         </div>
       )}
 

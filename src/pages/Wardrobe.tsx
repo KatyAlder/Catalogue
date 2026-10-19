@@ -20,13 +20,22 @@ import {
   renameShelf,
   setShowShelfNames,
 } from '../data/actions'
+import { agoText, lastSnapshotDate } from '../data/finance'
 import { useAppState } from '../data/store'
 import type { CollectionMeta, Shelf } from '../data/types'
 import { iconGlyph } from '../icons'
 
 const SHELF_PREFIX = 'shelf:'
 
-function Box({ c, justDragged }: { c: CollectionMeta; justDragged: React.RefObject<boolean> }) {
+function Box({
+  c,
+  caption,
+  justDragged,
+}: {
+  c: CollectionMeta
+  caption?: string
+  justDragged: React.RefObject<boolean>
+}) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: c.id })
   return (
     <div
@@ -48,6 +57,7 @@ function Box({ c, justDragged }: { c: CollectionMeta; justDragged: React.RefObje
       >
         <span className="box-icon">{iconGlyph(c.icon)}</span>
         <span className="box-name">{c.name}</span>
+        {caption && <span className="box-caption">{caption}</span>}
       </Link>
     </div>
   )
@@ -56,10 +66,12 @@ function Box({ c, justDragged }: { c: CollectionMeta; justDragged: React.RefObje
 function ShelfRow({
   shelf,
   byId,
+  captions,
   justDragged,
 }: {
   shelf: Shelf
   byId: Map<string, CollectionMeta>
+  captions: Map<string, string>
   justDragged: React.RefObject<boolean>
 }) {
   const { setNodeRef } = useDroppable({ id: SHELF_PREFIX + shelf.id })
@@ -69,7 +81,7 @@ function ShelfRow({
         {shelf.collectionIds.length === 0 && <span className="empty">Полиця порожня</span>}
         {shelf.collectionIds.map((id) => {
           const c = byId.get(id)
-          return c ? <Box key={id} c={c} justDragged={justDragged} /> : null
+          return c ? <Box key={id} c={c} caption={captions.get(id)} justDragged={justDragged} /> : null
         })}
       </div>
     </SortableContext>
@@ -82,6 +94,13 @@ export default function Wardrobe() {
   const [editing, setEditing] = useState(false)
   const justDragged = useRef(false)
   const byId = new Map(collections.map((c) => [c.id, c]))
+  // м’яка позначка для «Фінансів»: без сповіщень, лише підпис на іконці
+  const captions = new Map<string, string>()
+  for (const c of collections) {
+    if (c.module !== 'finance') continue
+    const last = lastSnapshotDate(db.collections[c.id]?.snapshots ?? [])
+    captions.set(c.id, last ? agoText(last) : 'ще не оновлено')
+  }
   const shelves = [...db.index.shelves].sort(
     (a, b) => (a.order ?? db.index.shelves.indexOf(a)) - (b.order ?? db.index.shelves.indexOf(b)),
   )
@@ -162,7 +181,7 @@ export default function Wardrobe() {
           {shelves.map((shelf) => (
             <section key={shelf.id} className="shelf">
               {settings.showShelfNames && <h2>{shelf.name}</h2>}
-              <ShelfRow shelf={shelf} byId={byId} justDragged={justDragged} />
+              <ShelfRow shelf={shelf} byId={byId} captions={captions} justDragged={justDragged} />
             </section>
           ))}
         </main>
