@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { saveFinanceUpdate, updateFinanceConfig } from '../data/financeActions'
+import { setCell } from '../data/recordActions'
 import { calcInvestment, isValidInvestment } from '../data/investment'
 import { agoText, envelopesOf, fmtMoney, lastSnapshotDate, rateOf, todayISO, totalsOf } from '../data/finance'
 import type { CollectionData, CollectionMeta } from '../data/types'
@@ -24,6 +25,11 @@ export default function Finance({ collection, data, tab }: Props) {
   const items = envelopesOf(collection, data.records)
   const totals = totalsOf(items, f.baseCurrency, f.rates)
   const last = lastSnapshotDate(data.snapshots)
+  // та сама сума в євро й доларах (за заданими курсами; базова валюта пропускається)
+  const converted = ['EUR', 'USD']
+    .filter((code) => code !== f.baseCurrency)
+    .map((code) => ({ code, rate: rateOf(code, f.baseCurrency, f.rates) }))
+  const shown = converted.filter((c) => c.rate !== undefined && c.rate > 0)
 
   return (
     <div>
@@ -33,6 +39,20 @@ export default function Finance({ collection, data, tab }: Props) {
           <strong>
             ≈ {fmtMoney(totals.approx)} {f.baseCurrency}
           </strong>
+          {shown.length > 0 && (
+            <span className="fin-conv">
+              {shown.map((c, i) => (
+                <span key={c.code}>
+                  {i > 0 && ' · '}≈ {fmtMoney(totals.approx / c.rate!)} {c.code}
+                </span>
+              ))}
+            </span>
+          )}
+          {shown.length < converted.length && converted.length > 0 && (
+            <span className="fin-conv missing">
+              Щоб побачити суму в {converted.filter((c) => !shown.includes(c)).map((c) => c.code).join(' і ')}, задай курс у вкладці «Курси»
+            </span>
+          )}
         </div>
         <div className="fin-by-cur">
           {Object.entries(totals.byCurrency).map(([cur, sum]) => (
@@ -65,6 +85,14 @@ function QuickUpdate({ collection, data }: { collection: CollectionMeta; data: C
   const [drafts, setDrafts] = useState<Record<string, string>>({})
   const [date, setDate] = useState(todayISO())
   const [saved, setSaved] = useState('')
+  const [nameDrafts, setNameDrafts] = useState<Record<string, string>>({})
+
+  /** Нова назва конверта зберігається одразу (без знімка); порожня назва скасовується */
+  const commitName = (id: string, current: string, typed: string) => {
+    const raw = typed.trim()
+    setNameDrafts((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== id)))
+    if (raw && raw !== current) setCell(collection.id, id, f.nameColumnId, raw)
+  }
 
   const valueOf = (id: string, amount: number) => drafts[id] ?? String(amount)
 
@@ -92,20 +120,36 @@ function QuickUpdate({ collection, data }: { collection: CollectionMeta; data: C
     <div className="card">
       <h3>Швидке оновлення</h3>
       <p className="muted small-label">
-        Онови суми й натисни «Зберегти оновлення»: це зафіксує знімок усіх конвертів на обрану дату.
+        Онови суми й натисни «Зберегти оновлення»: це зафіксує знімок усіх конвертів на обрану дату. Назву конверта можна змінити прямо тут: клікни на неї, відредагуй і натисни Enter (змінюється одразу, без знімка).
       </p>
       <div className="upd-list">
         {items.map((it) => (
-          <label className="upd-row" key={it.record.id}>
-            <span className="upd-name">{it.name}</span>
+          <div className="upd-row" key={it.record.id}>
+            <input
+              className="upd-name-input"
+              type="text"
+              aria-label="Назва конверта"
+              title="Натисни, щоб змінити назву"
+              value={nameDrafts[it.record.id] ?? it.name}
+              onChange={(e) => setNameDrafts((d) => ({ ...d, [it.record.id]: e.target.value }))}
+              onBlur={(e) => commitName(it.record.id, it.name, e.currentTarget.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.currentTarget.blur()
+                if (e.key === 'Escape') {
+                  setNameDrafts((d) => Object.fromEntries(Object.entries(d).filter(([k]) => k !== it.record.id)))
+                  e.currentTarget.blur()
+                }
+              }}
+            />
             <input
               type="text"
               inputMode="decimal"
+              aria-label={`Сума: ${it.name}`}
               value={valueOf(it.record.id, it.amount)}
               onChange={(e) => setDrafts((d) => ({ ...d, [it.record.id]: e.target.value }))}
             />
             <span className="upd-cur">{it.currency || f.baseCurrency}</span>
-          </label>
+          </div>
         ))}
       </div>
       <div className="form-actions upd-actions">

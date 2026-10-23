@@ -1227,3 +1227,27 @@ input[type='range'] {
 .box-wrap .decor-x {
   z-index: 2;
 }
+
+
+/* фінанси: перерахунок суми та редагована назва конверта */
+.fin-conv {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.fin-conv.missing {
+  font-size: 12px;
+  opacity: 0.8;
+}
+.upd-row input.upd-name-input {
+  text-align: left;
+  background: transparent;
+  border: 1px solid transparent;
+  border-bottom: 1px dashed var(--wood-500);
+  border-radius: 6px;
+  font-weight: 600;
+  padding: 6px 8px;
+}
+.upd-name-input:hover {
+  border-color: var(--wood-500);
+}
