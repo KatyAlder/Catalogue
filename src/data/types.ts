@@ -77,9 +77,13 @@ export interface Investment {
 
 export type CellValue = string | number | boolean | null
 
+/** Рахунок у «Фінансах»: гаманець (гроші на витрати) або конверт (відкладені). Без поля — конверт. */
+export type AccountKind = 'wallet' | 'envelope'
+
 export interface RecordItem {
   id: string
   values: Record<string, CellValue>
+  kind?: AccountKind
   /** Інвестиційні поля закладені в модель, UI — наступний етап */
   investment?: Investment
   createdAt: number
@@ -96,10 +100,55 @@ export interface Snapshot {
   updatedAt: number
 }
 
+/** Операція «Фінансів». Журнал веде лише значущі події, не щоденні витрати.
+    income: надходження на accountId (amount у валюті рахунку);
+    transfer: з fromId на toId (amount у валюті відправника, toAmount у валюті отримувача);
+    adjust: «зміна» accountId після швидкого оновлення (amount зі знаком). */
+export type OperationType = 'income' | 'transfer' | 'adjust'
+
+export interface Operation {
+  id: string
+  date: string // YYYY-MM-DD
+  type: OperationType
+  accountId?: string
+  fromId?: string
+  toId?: string
+  amount: number
+  currency: string
+  toAmount?: number
+  toCurrency?: string
+  source?: string
+  note?: string
+  updatedAt: number
+}
+
+/** Квартальний аудит: очікувані надходження й фіксовані витрати */
+export type AuditFreq = 'month' | 'quarter' | 'once'
+
+export interface AuditLine {
+  id: string
+  name: string
+  amount: number
+  currency: string
+  freq: AuditFreq
+  when?: string
+}
+
+export interface Audit {
+  id: string
+  date: string // YYYY-MM-DD
+  incomes: AuditLine[]
+  expenses: AuditLine[]
+  note: string
+  updatedAt: number
+}
+
 export interface CollectionData {
   id: string
   records: RecordItem[]
   snapshots: Snapshot[]
+  operations?: Operation[]
+  audits?: Audit[]
   deleted: Record<string, number> // id -> час видалення
 }
 

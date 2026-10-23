@@ -3,6 +3,7 @@ import { Link, Route, Routes } from 'react-router-dom'
 import { CLIENT_ID } from './auth/google'
 import { doSignIn, doSignOut, startApp, useAppState } from './data/store'
 import type { SyncStatus } from './data/store'
+import Audit from './pages/Audit'
 import CollectionEdit from './pages/CollectionEdit'
 import CollectionPage from './pages/CollectionPage'
 import RecordEdit from './pages/RecordEdit'
@@ -55,6 +56,7 @@ export default function App() {
         <Route path="/new" element={<CollectionEdit />} />
         <Route path="/c/:id" element={<CollectionPage />} />
         <Route path="/c/:id/edit" element={<CollectionEdit />} />
+        <Route path="/c/:id/audit" element={<Audit />} />
         <Route path="/c/:id/r/new" element={<RecordEdit />} />
         <Route path="/c/:id/r/:rid" element={<RecordEdit />} />
         <Route path="/search" element={<Search />} />

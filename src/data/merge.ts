@@ -45,6 +45,8 @@ export function mergeCollection(
     id: local.id,
     records: mergeById(local.records, remote.records, deleted),
     snapshots: mergeById(local.snapshots, remote.snapshots, deleted),
+    operations: mergeById(local.operations ?? [], remote.operations ?? [], deleted),
+    audits: mergeById(local.audits ?? [], remote.audits ?? [], deleted),
     deleted,
   }
 }

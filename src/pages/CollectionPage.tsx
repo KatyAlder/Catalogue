@@ -122,6 +122,7 @@ export default function CollectionPage() {
             (
               [
                 ['update', 'Оновлення'],
+                ['ops', 'Операції'],
                 ['dynamics', 'Динаміка'],
                 ['invest', 'Інвестиції'],
                 ['rates', 'Курси'],
@@ -138,6 +139,11 @@ export default function CollectionPage() {
             Плитка
           </button>
         </div>
+        {isFinance && (
+          <Link to={`/c/${c.id}/audit`} className="btn ghost">
+            Квартальний аудит
+          </Link>
+        )}
         <Link to={`/c/${c.id}/edit`} className="btn ghost">
           Налаштування
         </Link>

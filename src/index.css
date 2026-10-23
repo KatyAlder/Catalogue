@@ -1251,3 +1251,97 @@ input[type='range'] {
 .upd-name-input:hover {
   border-color: var(--wood-500);
 }
+
+
+/* фінанси: гаманці й конверти, журнал операцій */
+.fin-split {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: 20px;
+}
+.fin-divider {
+  width: 1px;
+  background: var(--wood-500);
+}
+.fin-all {
+  margin-top: 12px;
+}
+.upd-row input.upd-name-input.wallet {
+  color: #e6c46e;
+}
+.upd-item {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.upd-extra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.op-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px;
+  margin: 10px 0;
+}
+.op-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+}
+.op-row {
+  display: grid;
+  grid-template-columns: 90px 1fr auto auto;
+  gap: 10px;
+  align-items: center;
+  padding: 6px 0;
+  border-bottom: 1px dashed var(--wood-500);
+}
+.op-row.adjust {
+  opacity: 0.7;
+}
+.op-date,
+.op-amount {
+  white-space: nowrap;
+}
+.op-actions {
+  display: flex;
+  gap: 4px;
+}
+.audit-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 10px 0;
+}
+.audit-row {
+  display: grid;
+  grid-template-columns: 1.4fr 110px 80px 140px 1fr 32px;
+  gap: 8px;
+  align-items: center;
+}
+.audit-row input[inputmode='decimal'] {
+  text-align: right;
+}
+.audit-sums td:not(:first-child),
+.audit-sums th:not(:first-child) {
+  text-align: right;
+}
+@media (max-width: 700px) {
+  .fin-split {
+    grid-template-columns: 1fr;
+  }
+  .fin-divider {
+    width: auto;
+    height: 1px;
+  }
+  .op-row {
+    grid-template-columns: 1fr auto;
+  }
+  .audit-row {
+    grid-template-columns: 1fr 1fr;
+  }
+}

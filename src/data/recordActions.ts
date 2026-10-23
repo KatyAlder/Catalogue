@@ -1,5 +1,5 @@
 import { mutate } from './store'
-import type { CellValue, CollectionData, Investment, LocalDB } from './types'
+import type { AccountKind, CellValue, CollectionData, Investment, LocalDB } from './types'
 import { uid } from './types'
 
 function data(db: LocalDB, collectionId: string): CollectionData {
@@ -15,6 +15,7 @@ export function addRecord(
   collectionId: string,
   values: Record<string, CellValue>,
   investment?: Investment | null,
+  kind?: AccountKind,
 ): string {
   const id = uid()
   const t = Date.now()
@@ -24,6 +25,7 @@ export function addRecord(
         id,
         values,
         ...(investment ? { investment } : {}),
+        ...(kind === 'wallet' ? { kind } : {}),
         createdAt: t,
         updatedAt: t,
       })
@@ -39,12 +41,15 @@ export function updateRecord(
   id: string,
   values: Record<string, CellValue>,
   investment?: Investment | null,
+  kind?: AccountKind,
 ) {
   mutate(
     (db) => {
       const r = data(db, collectionId).records.find((x) => x.id === id)
       if (r) {
         r.values = values
+        if (kind === 'wallet') r.kind = 'wallet'
+        else if (kind === 'envelope') delete r.kind
         if (investment === null) delete r.investment
         else if (investment) r.investment = investment
         r.updatedAt = Date.now()

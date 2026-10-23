@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { CellValue, Column, Investment } from '../data/types'
+import type { AccountKind, CellValue, Column, Investment } from '../data/types'
 import { CellInput } from './Cells'
 
 function Wrapper({ as: Tag, className, children }: { as: 'div' | 'label'; className: string; children: React.ReactNode }) {
@@ -9,10 +9,11 @@ function Wrapper({ as: Tag, className, children }: { as: 'div' | 'label'; classN
 interface Props {
   columns: Column[]
   initial?: Record<string, CellValue>
-  onSave: (values: Record<string, CellValue>, investment: Investment | null) => void
-  /** Показати блок «Інвестиція» (для конвертів у «Фінансах») */
+  onSave: (values: Record<string, CellValue>, investment: Investment | null, kind?: AccountKind) => void
+  /** Показати блок «Інвестиція» (для конвертів у «Фінансах») і вибір типу рахунку */
   investmentEnabled?: boolean
   initialInvestment?: Investment
+  initialKind?: AccountKind
   onCancel: () => void
   onDuplicate?: () => void
   onDelete?: () => void
@@ -29,8 +30,10 @@ export default function RecordForm({
   onDelete,
   investmentEnabled,
   initialInvestment,
+  initialKind,
 }: Props) {
   const [values, setValues] = useState<Record<string, CellValue>>(initial ?? {})
+  const [kind, setKind] = useState<AccountKind>(initialKind ?? 'envelope')
   const [isInvest, setIsInvest] = useState(!!initialInvestment)
   const [rate, setRate] = useState(initialInvestment ? String(initialInvestment.annualRate) : '')
   const [start, setStart] = useState(initialInvestment?.startDate ?? '')
@@ -39,14 +42,15 @@ export default function RecordForm({
   const [error, setError] = useState('')
 
   const submit = () => {
-    if (!investmentEnabled || !isInvest) return onSave(values, null)
+    const k = investmentEnabled ? kind : undefined
+    if (!investmentEnabled || kind === 'wallet' || !isInvest) return onSave(values, null, k)
     const annualRate = Number(rate.replace(',', '.'))
     const termMonths = Number(term)
     if (!Number.isFinite(annualRate) || rate.trim() === '' || annualRate < 0)
       return setError('Вкажи річну ставку у відсотках')
     if (!start) return setError('Вкажи дату початку')
     if (!Number.isInteger(termMonths) || termMonths <= 0) return setError('Строк має бути цілою кількістю місяців')
-    onSave(values, { annualRate, startDate: start, termMonths, compound })
+    onSave(values, { annualRate, startDate: start, termMonths, compound }, k)
   }
 
   return (
@@ -57,6 +61,15 @@ export default function RecordForm({
         submit()
       }}
     >
+      {investmentEnabled && (
+        <label className="field">
+          <span>Тип рахунку</span>
+          <select value={kind} onChange={(e) => setKind(e.target.value as AccountKind)}>
+            <option value="envelope">Конверт (відкладені гроші)</option>
+            <option value="wallet">Гаманець (гроші на витрати: картка, готівка)</option>
+          </select>
+        </label>
+      )}
       {columns.map((c) => (
         // progress має власні кнопки: у <label> клік по підпису натискав би «−»
         <Wrapper key={c.id} as={c.type === 'progress' ? 'div' : 'label'} className={c.type === 'checkbox' ? 'check' : 'field'}>
@@ -64,7 +77,7 @@ export default function RecordForm({
           <CellInput col={c} value={values[c.id]} onChange={(v) => setValues((s) => ({ ...s, [c.id]: v }))} />
         </Wrapper>
       ))}
-      {investmentEnabled && (
+      {investmentEnabled && kind === 'envelope' && (
         <fieldset className="invest-box">
           <label className="check">
             <input type="checkbox" checked={isInvest} onChange={(e) => setIsInvest(e.target.checked)} />

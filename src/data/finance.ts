@@ -1,11 +1,21 @@
-import type { CollectionMeta, RecordItem, Snapshot } from './types'
+import type { AccountKind, AuditFreq, AuditLine, CollectionMeta, Operation, RecordItem, Snapshot } from './types'
 
 export interface Envelope {
   record: RecordItem
   name: string
   currency: string
   amount: number
+  kind: AccountKind
 }
+
+export const kindOf = (r: RecordItem): AccountKind => (r.kind === 'wallet' ? 'wallet' : 'envelope')
+
+/** Гаманці завжди зверху списку; порядок усередині груп зберігається. */
+export function walletsFirst<T extends { kind: AccountKind }>(items: T[]): T[] {
+  return [...items.filter((i) => i.kind === 'wallet'), ...items.filter((i) => i.kind !== 'wallet')]
+}
+
+export const round2 = (n: number) => Math.round(n * 100) / 100
 
 /** Код валюти — підпис вибраного варіанта у стовпці валюти. */
 export function envelopesOf(c: CollectionMeta, records: RecordItem[]): Envelope[] {
@@ -22,8 +32,55 @@ export function envelopesOf(c: CollectionMeta, records: RecordItem[]): Envelope[
       name: nameCol && rawName ? String(rawName) : 'Без назви',
       currency: cur,
       amount: typeof amt === 'number' ? amt : 0,
+      kind: kindOf(record),
     }
   })
+}
+
+/** Середній курс обмінів базова валюта → валюта рахунку (за сумами: віддала / отримала).
+    Лише перекази на цей рахунок із рахунків у базовій валюті. */
+export function avgExchangeRate(
+  ops: Operation[],
+  accountId: string | null,
+  toCurrency: string,
+  base: string,
+): { rate: number; count: number } | null {
+  if (!toCurrency || toCurrency === base) return null
+  let given = 0
+  let got = 0
+  let count = 0
+  for (const o of ops) {
+    if (o.type !== 'transfer' || o.currency !== base || o.toCurrency !== toCurrency) continue
+    if (accountId && o.toId !== accountId) continue
+    if (!o.toAmount || o.toAmount <= 0) continue
+    given += o.amount
+    got += o.toAmount
+    count++
+  }
+  return count ? { rate: given / got, count } : null
+}
+
+/** Підпис курсу переказу між різними валютами: «1 EUR = 43,5 UAH». */
+export function exchangeRateText(op: { currency: string; toCurrency?: string; amount: number; toAmount?: number }, base: string): string {
+  if (!op.toCurrency || op.toCurrency === op.currency || !op.toAmount || !op.amount) return ''
+  const fmt = (n: number) => n.toLocaleString('uk-UA', { maximumFractionDigits: 4 })
+  if (op.currency === base) return `1 ${op.toCurrency} = ${fmt(op.amount / op.toAmount)} ${base}`
+  if (op.toCurrency === base) return `1 ${op.currency} = ${fmt(op.toAmount / op.amount)} ${base}`
+  return `1 ${op.toCurrency} = ${fmt(op.amount / op.toAmount)} ${op.currency}`
+}
+
+export const AUDIT_FREQ: [AuditFreq, string][] = [
+  ['month', 'щомісяця'],
+  ['quarter', 'раз на квартал'],
+  ['once', 'разово'],
+]
+
+/** Сума рядка аудиту за квартал: щомісячні ×3, решта як є. */
+export const quarterAmount = (l: AuditLine) => (l.freq === 'month' ? l.amount * 3 : l.amount)
+
+export function quarterLabel(date: string): string {
+  const [y, m] = date.split('-').map(Number)
+  return `${['I', 'II', 'III', 'IV'][Math.floor((m - 1) / 3)]} квартал ${y}`
 }
 
 /** Курс до базової валюти; undefined — курс не задано. */
